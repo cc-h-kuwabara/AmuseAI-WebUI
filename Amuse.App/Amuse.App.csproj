@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -92,6 +92,15 @@
     <Resource Include="Fonts\Sharp-Thin-100.otf" />
     <Resource Include="Fonts\Solid-900.otf" />
     <Resource Include="Fonts\Thin-100.otf" />
+  </ItemGroup>
+  <ItemGroup Condition="Exists('Fonts\SourceHanSansJP-Regular.otf')">
+    <Resource Include="Fonts\SourceHanSansJP-ExtraLight.otf" />
+    <Resource Include="Fonts\SourceHanSansJP-Light.otf" />
+    <Resource Include="Fonts\SourceHanSansJP-Normal.otf" />
+    <Resource Include="Fonts\SourceHanSansJP-Regular.otf" />
+    <Resource Include="Fonts\SourceHanSansJP-Medium.otf" />
+    <Resource Include="Fonts\SourceHanSansJP-Bold.otf" />
+    <Resource Include="Fonts\SourceHanSansJP-Heavy.otf" />
   </ItemGroup>
 
   <!--Localization-->
