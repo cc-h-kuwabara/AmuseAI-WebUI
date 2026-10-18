@@ -33,6 +33,8 @@ PORT = 8080
 USE_GPU = True
 USE_WEB_UI = True
 MOUNT_DRIVE = False
+CACHE_DIRECTORY = ''  # Drive使用時は MyDrive/Amuse/BuildCache を自動使用
+BUILD_JOBS = 0  # 0: CPU・空きメモリーに応じて自動設定（最大8）
 MODEL_DIRECTORY = ''  # 例: /content/drive/MyDrive/Amuse/Models
 GIT_URL = 'https://github.com/cc-h-kuwabara/AmuseAI-WebUI.git'
 GIT_REF = 'webui'  # Colab対応を含むブランチ
@@ -45,6 +47,8 @@ import sys, subprocess
 if MOUNT_DRIVE:
     from google.colab import drive
     drive.mount('/content/drive')
+if CACHE_DIRECTORY.startswith('/content/drive/') and not MOUNT_DRIVE:
+    raise ValueError('Driveキャッシュには MOUNT_DRIVE=True が必要です。')
 if MODEL_DIRECTORY.startswith('/content/drive/') and not MOUNT_DRIVE:
     raise ValueError('Driveのモデル保存先を使う場合は MOUNT_DRIVE=True にしてください。')
 WORK.mkdir(parents=True, exist_ok=True)
@@ -66,8 +70,13 @@ import colab_runtime as amuse
 print('Source ready:', SOURCE)
 ''')
 cell('markdown', '## 2. ビルドする\n依存ライブラリー、プロジェクト専用.NET SDK、Web版、AIホストを準備します。GPUを使う場合は固定版StableDiffusion.cppのCUDA共有ライブラリーも構築します。モデルのダウンロードはまだ行いません。')
+cell('markdown', '''
+高速化するには最初の設定セルで `MOUNT_DRIVE=True` にしてください。ビルド済みアプリとCUDAライブラリーをDriveに保存し、次回は互換性のあるキャッシュから復元します。GPU・CUDA・OSやソースが変わると必要な部分を再ビルドします。モデルや認証情報はビルドキャッシュに含めません。
+初回のCUDAコンパイルは必要です。`BUILD_JOBS=0` は並列数を自動設定します。メモリー不足で失敗する場合は `BUILD_JOBS=2` に下げてください。同じランタイム内の再実行では既存のビルドを利用します。
+''')
 cell('code', '''
-distribution, DATA = amuse.prepare(SOURCE, WORK, use_gpu=USE_GPU)
+cache_directory = CACHE_DIRECTORY or ('/content/drive/MyDrive/Amuse/BuildCache' if MOUNT_DRIVE else None)
+distribution, DATA = amuse.prepare(SOURCE, WORK, use_gpu=USE_GPU, cache_directory=cache_directory, build_jobs=BUILD_JOBS)
 print('配布版:', distribution)
 print('データ:', DATA)
 ''')

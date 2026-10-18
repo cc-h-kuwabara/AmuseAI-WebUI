@@ -9,9 +9,10 @@ fi
 stage=$(mktemp -d -t amuse-publish-XXXXXXXX)
 trap 'rm -rf -- "$stage"' EXIT
 for name in Web Host.OnnxRuntime Host.StableDiffusionCpp; do
+  echo "Publishing Amuse.$name ..."
   dotnet publish "$root/Amuse.$name/Amuse.$name.csproj" -c Release \
     -p:AmusePortable=true -p:BaseIntermediateOutputPath=obj/linux/ -p:BaseOutputPath=bin/linux/ \
-    -r linux-x64 --self-contained true -o "$stage/$name" --nologo
+    -r linux-x64 --self-contained true -o "$stage/$name" --nologo --verbosity normal --tl:off
 done
 mkdir -p -- "$output"
 for name in Web Host.OnnxRuntime Host.StableDiffusionCpp; do cp -a "$stage/$name/." "$output/"; done

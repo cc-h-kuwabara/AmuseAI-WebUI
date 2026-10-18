@@ -13,6 +13,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
+import colab_cache
 
 
 def extract_source(archive, destination):
@@ -32,43 +33,114 @@ def extract_source(archive, destination):
 
 def run(command, *, env=None, cwd=None):
     print('+', ' '.join(map(str, command)), flush=True)
-    subprocess.run(list(map(str, command)), env=env, cwd=cwd, check=True)
+    started = time.monotonic()
+    # Forward through Python stdout so Colab captures child-process output too.
+    with subprocess.Popen(list(map(str, command)), env=env, cwd=cwd,
+                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                          text=True, encoding='utf-8', errors='replace', bufsize=1) as process:
+        try:
+            for line in process.stdout:
+                print(line, end='', flush=True)
+            returncode = process.wait()
+        except BaseException:
+            process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+            raise
+        if returncode:
+            raise subprocess.CalledProcessError(returncode, command)
+    print(f'Finished in {time.monotonic() - started:.1f}s', flush=True)
 
 
-def prepare(source, work, use_gpu=True):
+def build_parallelism():
+    cpus = len(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else os.cpu_count() or 2
+    try:
+        quota, period = Path('/sys/fs/cgroup/cpu.max').read_text().split()
+        if quota != 'max':
+            cpus = min(cpus, max(1, int(quota) // int(period)))
+    except (OSError, ValueError):
+        pass
+    try:
+        available = int(next(line.split()[1] for line in Path('/proc/meminfo').read_text().splitlines() if line.startswith('MemAvailable:'))) * 1024
+        memory_jobs = max(1, int((available - 2 * 1024**3) // (2 * 1024**3)))
+    except (OSError, StopIteration, ValueError):
+        memory_jobs = 2
+    return max(1, min(cpus, memory_jobs, 8))
+
+
+def prepare(source, work, use_gpu=True, *, cache_directory=None, build_jobs=0):
+    if not isinstance(build_jobs, int) or not 0 <= build_jobs <= 64:
+        raise ValueError('BUILD_JOBS must be 0 (automatic) or an integer from 1 to 64.')
     source, work = Path(source).resolve(), Path(work).resolve()
     if platform.system() != 'Linux' or platform.machine() not in ('x86_64', 'amd64'):
         raise RuntimeError('Use a Linux x64 Colab runtime.')
+    native_platform = None
     if use_gpu:
         for tool in ('nvidia-smi', 'nvcc'):
             if not shutil.which(tool):
                 raise RuntimeError(f'{tool} is missing. Select a GPU runtime, or set USE_GPU=False.')
         run(['nvidia-smi', '--query-gpu=name,memory.total', '--format=csv,noheader'])
+        native_platform = {
+            'gpu': subprocess.check_output(['nvidia-smi', '--query-gpu=name', '--format=csv,noheader'], text=True).strip(),
+            'compiler': subprocess.check_output(['nvcc', '--version'], text=True).strip(),
+            'installer': colab_cache.digest_file(source / 'Scripts/install-sd-cuda-linux.sh')}
     work.mkdir(parents=True, exist_ok=True)
     if shutil.disk_usage(work).free < 8 * 1024**3:
         raise RuntimeError('At least 8 GiB free space is needed for building, plus space for the selected model.')
-    apt = ['apt-get'] if os.geteuid() == 0 else ['sudo', 'apt-get']
-    run([*apt, 'update', '-qq'])
-    run([*apt, 'install', '-y', '-qq', 'build-essential', 'cmake', 'git', 'curl',
-         'ffmpeg', 'libgomp1', 'libglib2.0-0', 'libgl1'])
+    cache = Path(cache_directory).expanduser().resolve() if cache_directory else None
+    system = {'machine': platform.machine(), 'libc': platform.libc_ver(), 'os': platform.freedesktop_os_release().get('VERSION_ID')}
+    app_key = colab_cache.fingerprint({'type': 'app', 'source': colab_cache.source_identity(source), 'system': system}) if cache else None
+    native_key = colab_cache.fingerprint({'type': 'cuda', 'system': system, 'native': native_platform}) if cache and use_gpu else None
+    distribution = work / 'app'
+    data = work / 'data'
+    data.mkdir(exist_ok=True)
+    native = data / 'RuntimeStableDiffusionCpp/linux-cuda'
+    if cache:
+        colab_cache.restore(cache, app_key, distribution, ['Amuse.Web', 'AmuseHost.StableDiffusionCpp', 'AmuseHost.OnnxRuntime'])
+        if use_gpu:
+            colab_cache.restore(cache, native_key, native, ['libstable-diffusion.so'])
+    need_app = not (distribution / 'Amuse.Web').is_file()
+    need_native = use_gpu and not (native / 'libstable-diffusion.so').is_file()
+    packages = {'ffmpeg':'ffmpeg', 'libgomp1':None, 'libglib2.0-0':None, 'libgl1':None}
+    if need_app or need_native:
+        packages.update({'build-essential':'g++', 'cmake':'cmake', 'git':'git', 'curl':'curl'})
+    missing = []
+    for package, command in packages.items():
+        if command and shutil.which(command):
+            continue
+        result = subprocess.run(['dpkg-query', '-W', '-f=${Status}', package], capture_output=True, text=True)
+        if result.returncode or result.stdout.strip() != 'install ok installed':
+            missing.append(package)
+    if missing:
+        apt = ['apt-get'] if os.geteuid() == 0 else ['sudo', 'apt-get']
+        run([*apt, 'update', '-qq'])
+        run([*apt, 'install', '-y', '-qq', *missing])
+    else:
+        print('System dependencies already installed; skipping APT.', flush=True)
     dotnet = work / 'dotnet'
-    if not (dotnet / 'dotnet').is_file():
+    if need_app and not (dotnet / 'dotnet').is_file():
         installer = work / 'dotnet-install.sh'
         urllib.request.urlretrieve('https://dot.net/v1/dotnet-install.sh', installer)
         run(['bash', installer, '--channel', '10.0', '--install-dir', dotnet, '--no-path'])
     env = dict(os.environ, DOTNET_ROOT=str(dotnet), DOTNET_CLI_TELEMETRY_OPTOUT='1',
                DOTNET_NOLOGO='1', PATH=str(dotnet) + os.pathsep + os.environ['PATH'])
-    distribution = work / 'app'
-    if not (distribution / 'Amuse.Web').is_file():
+    if need_app:
         if distribution.exists():
             raise RuntimeError(f'Incomplete publish directory: {distribution}. Choose a new WORK directory.')
         run(['bash', source / 'Scripts/publish-web-linux.sh', distribution], env=env)
-    data = work / 'data'
-    data.mkdir(exist_ok=True)
-    if use_gpu:
-        native = data / 'RuntimeStableDiffusionCpp/linux-cuda'
-        if not (native / 'libstable-diffusion.so').is_file():
-            run(['bash', source / 'Scripts/install-sd-cuda-linux.sh', data], env=env)
+        if cache:
+            colab_cache.save(cache, app_key, distribution)
+    if need_native:
+        env['AMUSE_BUILD_JOBS'] = str(build_jobs or build_parallelism())
+        print('CUDA build parallel jobs:', env['AMUSE_BUILD_JOBS'], flush=True)
+        run(['bash', source / 'Scripts/install-sd-cuda-linux.sh', data], env=env)
+        if cache:
+            colab_cache.save(cache, native_key, native)
+    elif use_gpu:
+        print('CUDA library already present; skipping CUDA compilation.', flush=True)
     return distribution, data
 
 

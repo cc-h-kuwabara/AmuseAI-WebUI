@@ -7,11 +7,16 @@ for tool in git cmake nvcc nvidia-smi; do command -v "$tool" >/dev/null || { ech
 nvidia-smi --query-gpu=name --format=csv,noheader
 stage=$(mktemp -d -t amuse-cuda-XXXXXXXX)
 trap 'rm -rf -- "$stage"' EXIT
-git clone --depth 1 --branch master-968-8cd731e --recurse-submodules --shallow-submodules https://github.com/leejet/stable-diffusion.cpp.git "$stage/source"
+echo "Fetching StableDiffusion.cpp sources ..."
+git clone --progress --depth 1 --branch master-968-8cd731e https://github.com/leejet/stable-diffusion.cpp.git "$stage/source"
+# Examples, WebP and WebM are disabled; only ggml is needed.
+git -C "$stage/source" submodule update --init --progress --depth 1 ggml
+echo "Configuring CUDA build ..."
 cmake -S "$stage/source" -B "$stage/build" -DCMAKE_BUILD_TYPE=Release \
   -DSD_CUDA=ON -DSD_BUILD_SHARED_LIBS=ON -DSD_BUILD_EXAMPLES=OFF \
   -DSD_WEBP=OFF -DSD_WEBM=OFF -DCMAKE_CUDA_ARCHITECTURES=native
-cmake --build "$stage/build" --parallel "${AMUSE_BUILD_JOBS:-2}"
+echo "Compiling CUDA library (parallel jobs: ${AMUSE_BUILD_JOBS:-2}) ..."
+cmake --build "$stage/build" --parallel "${AMUSE_BUILD_JOBS:-2}" --verbose
 library=$(find "$stage/build" -name libstable-diffusion.so -type f -print -quit)
 [[ -n "$library" ]] || { echo "Built shared library not found." >&2; exit 1; }
 mkdir -p -- "$target"
