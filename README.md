@@ -112,6 +112,7 @@ dotnet build Amuse.sln -c Release
 
 Open `http://localhost:8080`. The server binds only to loopback. Stop it with `Ctrl+C`.
 For Linux x64, run `bash Scripts/publish-web-linux.sh`; CPU and NVIDIA CUDA setup instructions are in the Web README.
+For Google Colab, use [Amuse_Web_Colab.ipynb](Notebooks/Amuse_Web_Colab.ipynb) and the [Colab setup guide](Notebooks/README.md).
 See [Amuse.Web/README.md](Amuse.Web/README.md) for desktop data import, publishing, supported workflows, and validation limits.
 
 

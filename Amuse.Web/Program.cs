@@ -70,19 +70,11 @@ try
     var csrf = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
     app.Use(async (context, next) =>
     {
-        var host = context.Request.Host;
-        if (context.Connection.RemoteIpAddress is not { } remote || !IPAddress.IsLoopback(remote) ||
-            host.Host is not ("localhost" or "127.0.0.1" or "[::1]" or "::1") || (host.Port ?? 80) != options.Port)
-        { context.Response.StatusCode = 403; return; }
-        var origin = context.Request.Headers.Origin.ToString();
-        var validOrigin = origin.Length == 0 || (Uri.TryCreate(origin, UriKind.Absolute, out var originUri) &&
-            originUri.Scheme == "http" && originUri.UserInfo.Length == 0 &&
-            originUri.Host.Equals(host.Host.Trim('[', ']'), StringComparison.OrdinalIgnoreCase) && originUri.Port == options.Port);
-        if (!validOrigin || context.Request.Headers["Sec-Fetch-Site"] == "cross-site")
+        if (!BrowserAccess.Allows(context, options))
         { context.Response.StatusCode = 403; return; }
         context.Response.Headers["X-Content-Type-Options"] = "nosniff";
         context.Response.Headers["Referrer-Policy"] = "no-referrer";
-        context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'none'";
+        context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self'; frame-ancestors " + BrowserAccess.FramePolicy(options) + "; object-src 'none'; base-uri 'none'";
         if (context.Request.Path.StartsWithSegments("/api"))
         {
             context.Response.Headers.CacheControl = "no-store";

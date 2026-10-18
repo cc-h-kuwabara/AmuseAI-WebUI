@@ -2,6 +2,8 @@
 
 Windows / Linux x64で動くASP.NET CoreのWebアプリです。ブラウザーからAIホストを利用します。Linux版はWPFに依存しません。Windowsデスクトップ版は引き続き利用できます。
 
+Google Colabでは [専用ノートブックと手順](../Notebooks/README.md) を使用してください。ポートプロキシへの対応は明示指定時のみ有効になります。
+
 ## Linuxで起動する
 
 Ubuntu 24.04 x64を検証対象にしています。Linux版はCPUによるStableDiffusion.cppとONNX推論、およびNVIDIA CUDAによるStableDiffusion.cppに対応する構成です。Windows用の実行環境・DLLは流用せず、Linux用の環境を作成してください。HuggingFaceの同梱PythonホストとONNXのGPU実行はLinux版では未対応です。NVIDIA実機でのCUDAビルド・推論は未検証です。
