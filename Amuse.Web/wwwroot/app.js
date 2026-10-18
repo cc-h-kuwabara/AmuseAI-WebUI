@@ -86,7 +86,16 @@ function applyDefaults(){
   $('model-hint').textContent=`${model.pipeline} · ${model.mediaType} · ${model.status}`;
   updateQuality();
 }
-function updateQuality(){const device=catalog?.devices.find(d=>d.id===+$('device').value),model=currentModel();const modes=(device?.qualityModes||['Standard','Draft','Production']).filter(q=>!model?.memoryProfile?.length||model.memoryProfile.some(p=>p.qualityMode===q));setOptions('quality',modes.map(q=>[q,q]));}
+function updateQuality(){
+  const model=currentModel();
+  const devices=(catalog?.devices||[]).filter(d=>!d.supportedBackends||!model||d.supportedBackends.includes(model.backend));
+  setOptions('device',devices.map(d=>[d.id,`${d.name} · ${d.memory} MB`]));
+  $('generate-button').disabled=!model||!devices.length;
+  if(model&&!devices.length)$('model-hint').textContent=`${model.backend} に対応する実行デバイスがありません。対応する別のモデルを選択してください。`;
+  const device=devices.find(d=>d.id===+$('device').value);
+  const modes=(device?.qualityModes||['Standard','Draft','Production']).filter(q=>!model?.memoryProfile?.length||model.memoryProfile.some(p=>p.qualityMode===q));
+  setOptions('quality',modes.map(q=>[q,q]));
+}
 function updateProcessModels(){
   if(!catalog)return;
   const operation=$('operation').value;

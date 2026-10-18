@@ -149,7 +149,8 @@ public sealed class Engine(WebData data, FileStore files, IServiceProvider servi
         var model = (IGenerateModel)Model(request.ModelKind, request.ModelId);
         var view = ParseView(request.View);
         var device = Device(request.DeviceId);
-        if (device.SupportedBackends?.Contains(model.Backend) == false) throw new ArgumentException("The selected execution device does not support this backend.");
+        if (device.SupportedBackends?.Contains(model.Backend) == false)
+            throw new ArgumentException($"Device '{device.Name}' does not support {model.Backend} for model '{model.Name}'. Supported backends: {string.Join(", ", device.SupportedBackends)}. Select a compatible model or device.");
         var process = Process(view);
         if (request.ControlNetId is not null && Processes(model)?.Contains(ProcessType.ImageControlNet) == true) process = ProcessType.ImageControlNet;
         if (Processes(model)?.Contains(process) == false) throw new ArgumentException("Model does not support this process.");
