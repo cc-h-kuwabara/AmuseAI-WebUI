@@ -29,6 +29,10 @@ class ColabTests(unittest.TestCase):
     def test_notebook_cells_compile_and_have_no_saved_outputs(self):
         notebook = json.loads((ROOT / 'Notebooks/Amuse_Web_Colab.ipynb').read_text(encoding='utf-8'))
         self.assertEqual(notebook['nbformat'], 4)
+        code = '\n'.join(''.join(cell['source']) for cell in notebook['cells'] if cell['cell_type'] == 'code')
+        self.assertNotIn('proxyPort', code)
+        self.assertNotIn('serve_kernel_port', code)
+        self.assertIn('amuse.CloudflareTunnel(WORK, PORT).start()', code)
         for cell in notebook['cells']:
             if cell['cell_type'] == 'code':
                 compile(''.join(cell['source']), cell['id'], 'exec')

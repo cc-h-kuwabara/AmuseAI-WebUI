@@ -22,7 +22,7 @@ NVIDIA GPUでLinux Web版を動かすノートブックです。「ランタイ�
 
 このノートブックから `https://github.com/cc-h-kuwabara/AmuseAI-WebUI.git` の `webui` ブランチをcloneしてビルドします。ソースZIPのアップロードは不要です。Pythonのグローバルパッケージは変更しません。
 
-Web UIはColab公式ポートプロキシでノートブック内に表示します。公開トンネルや常時起動・切断回避処理は使いません。[Colab公式FAQ](https://research.google.com/colaboratory/faq.html)では、無料枠・コンピュートユニット残高なしでWeb UIを主に使う生成処理が制限されています。その場合は `USE_WEB_UI=False` とし、下の生成セルから実行してください。有料枠でもランタイムの寿命・利用可能GPUは保証されません。
+Web UIはCloudflare Quick Tunnelで公開します。「3. 起動・表示」に出るリンクをブラウザーで開いてください。Colabのポートプロキシ・iframeは使いません。公開URLを知る人はアプリを操作できます（ログイン認証なし）。URLを共有しないでください。常時起動・切断回避処理は使いません。[Colab公式FAQ](https://research.google.com/colaboratory/faq.html)では、無料枠・コンピュートユニット残高なしでWeb UIを主に使う生成処理が制限されています。その場合は `USE_WEB_UI=False` とし、下の生成セルから実行してください。有料枠でもランタイムの寿命・利用可能GPUは保証されません。
 
 モデル・結果は通常ランタイム終了時に失われます。必要ならDriveへモデルを保存し、最後のセルで結果をダウンロードします。Colab上のCUDA実推論は別途実機確認が必要です。
 ''')
@@ -85,16 +85,18 @@ cell('markdown', '## 3. 起動・表示\nポートは設定セルのPORTで変�
 cell('code', '''
 if 'amuse_server' in globals():
     amuse_server.stop()
-proxy_url = frame_origin = None
-if USE_WEB_UI:
-    import json
-    from google.colab import output
-    proxy_url = output.eval_js(f'google.colab.kernel.proxyPort({int(PORT)})')
-    frame_origin = output.eval_js('window.location.origin')
-    # 現在の出力セルだけを埋め込み元として許可する
-    amuse.https_origin(proxy_url)
-    amuse.https_origin(frame_origin)
-amuse_server = amuse.Server(distribution, DATA, PORT, proxy_url=proxy_url, frame_origin=frame_origin).start()
+if 'amuse_tunnel' in globals():
+    amuse_tunnel.stop()
+proxy_url = None
+try:
+    if USE_WEB_UI:
+        amuse_tunnel = amuse.CloudflareTunnel(WORK, PORT).start()
+        proxy_url = amuse_tunnel.url
+    amuse_server = amuse.Server(distribution, DATA, PORT, proxy_url=proxy_url).start()
+except BaseException:
+    if 'amuse_tunnel' in globals():
+        amuse_tunnel.stop()
+    raise
 amuse_server.initialize_environment(use_gpu=USE_GPU)
 if MODEL_DIRECTORY:
     general = amuse_server.request('/api/config/general')
@@ -103,7 +105,8 @@ if MODEL_DIRECTORY:
 catalog = amuse_server.request('/api/catalog')
 print('実行デバイス:', [(d['id'], d['name']) for d in catalog['devices']])
 if USE_WEB_UI:
-    output.serve_kernel_port_as_iframe(PORT, height=1000)
+    from IPython.display import display, Markdown
+    display(Markdown(f'[Open Amuse Web UI]({proxy_url})'))
 else:
     print('ノートブックAPIモードです。次の生成セルを使用してください。')
 ''')
@@ -141,6 +144,8 @@ cell('code', '''
 if 'amuse_server' in globals():
     amuse_server.stop()
     print('Amuseを停止しました。')
+if 'amuse_tunnel' in globals():
+    amuse_tunnel.stop()
 ''')
 notebook = {'nbformat': 4, 'nbformat_minor': 5, 'metadata': {
     'colab': {'name': 'Amuse_Web_Colab.ipynb', 'provenance': []},

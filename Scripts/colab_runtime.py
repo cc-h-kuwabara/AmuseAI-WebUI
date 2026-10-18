@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import shutil
 import socket
 import subprocess
@@ -159,6 +160,63 @@ def https_origin(url):
     if parsed.scheme != 'https' or not parsed.hostname or parsed.username or parsed.password or parsed.path not in ('', '/') or parsed.query or parsed.fragment:
         raise ValueError('Colab proxy/frame URL must be an HTTPS origin without a path or credentials.')
     return urllib.parse.urlunsplit(('https', parsed.netloc, '', '', ''))
+
+
+class CloudflareTunnel:
+    """Own a temporary Quick Tunnel and its log; never stop unrelated processes."""
+    def __init__(self, work, port=8082):
+        if not isinstance(port, int) or not 1 <= port <= 65535:
+            raise ValueError('PORT must be an integer between 1 and 65535.')
+        self.work, self.port = Path(work).resolve(), port
+        self.process = self.log = self.url = None
+        self.log_path = self.work / 'logs/cloudflared.log'
+
+    def start(self, timeout=60):
+        if self.process is not None:
+            raise RuntimeError('Stop the previous tunnel before restarting.')
+        binary = self.work / 'tools/cloudflared'
+        if not binary.is_file():
+            if platform.system() != 'Linux' or platform.machine() not in ('x86_64', 'amd64'):
+                raise RuntimeError('Automatic cloudflared installation requires Linux x64.')
+            binary.parent.mkdir(parents=True, exist_ok=True)
+            temporary = binary.with_suffix('.download')
+            try:
+                urllib.request.urlretrieve('https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64', temporary)
+                temporary.chmod(0o755)
+                temporary.replace(binary)
+            finally:
+                temporary.unlink(missing_ok=True)
+        self.log_path.parent.mkdir(parents=True, exist_ok=True)
+        self.log = self.log_path.open('wb', buffering=0)
+        try:
+            self.process = subprocess.Popen([str(binary), 'tunnel', '--no-autoupdate', '--url',
+                                             f'http://127.0.0.1:{self.port}'],
+                                            stdout=self.log, stderr=self.log)
+            deadline = time.monotonic() + timeout
+            while time.monotonic() < deadline:
+                if self.process.poll() is not None:
+                    raise RuntimeError(f'Cloudflare Tunnel exited. See {self.log_path}')
+                match = re.search(r'https://[a-z0-9-]+\.trycloudflare\.com\b', self.log_path.read_text(errors='replace'))
+                if match:
+                    self.url = https_origin(match.group())
+                    return self
+                time.sleep(.25)
+            raise TimeoutError(f'Cloudflare URL was not issued. See {self.log_path}')
+        except BaseException:
+            self.stop()
+            raise
+
+    def stop(self):
+        if self.process is not None and self.process.poll() is None:
+            self.process.terminate()
+            try:
+                self.process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+                self.process.wait()
+        if self.log:
+            self.log.close()
+        self.process = self.log = self.url = None
 
 
 class Server:

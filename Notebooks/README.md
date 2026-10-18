@@ -3,7 +3,7 @@
 1. `Amuse_Web_Colab.ipynb` をColabの「ファイル → ノートブックをアップロード」で開きます。
 2. 「ランタイムのタイプを変更」でNVIDIA GPUを選びます。
 3. 上から実行します。`https://github.com/cc-h-kuwabara/AmuseAI-WebUI.git` の `webui` ブランチを自動的にcloneしてビルドします。ソースZIPのアップロードは不要です。
-4. ビルド後、Web画面がノートブック内に表示されます。ポートは最初の設定セルの `PORT` で指定します。
+4. 「3. 起動・表示」でCloudflare Tunnelが起動し、表示された「Open Amuse Web UI」リンクをブラウザーで開きます。既定ポートは8082です。
 5. 終了時は停止セルを実行します。
 
 CUDAと.NETの初回ビルドには時間がかかります。モデルは別途ダウンロードされます。標準の保存先は `/content/amuse` なので、ランタイムの終了で失われます。モデルのDrive保存と結果ZIPのダウンロードは任意です。
@@ -18,9 +18,11 @@ CUDAと.NETの初回ビルドには時間がかかります。モデルは別途
 
 ## Web UIとノートブックAPI
 
-[Colab公式FAQ](https://research.google.com/colaboratory/faq.html)では、無料枠・コンピュートユニット残高なしでWeb UIを主に使う生成処理を制限しています。その場合は `USE_WEB_UI=False` とし、任意の生成セルを `RUN_SAMPLE=True` にして実行してください。Web UIの表示には公式の `serve_kernel_port_as_iframe` と `proxyPort` を使用します。公開トンネルは作りません。
+[Colab公式FAQ](https://research.google.com/colaboratory/faq.html)では、無料枠・コンピュートユニット残高なしでWeb UIを主に使う生成処理を制限しています。その場合は `USE_WEB_UI=False` とし、任意の生成セルを `RUN_SAMPLE=True` にして実行してください。このモードではトンネルを起動しません。
 
-サーバーは引き続きlocalhostにバインドします。ノートブックから取得したプロキシのHTTPS originと現在の出力フレームだけを明示的に許可し、その他のHost/Originと、トークンを持たない変更要求は拒否します。通常のローカル起動時にはColab用の許可はありません。
+Web UIは [Cloudflare Quick Tunnel](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/) を使用します。公式GitHubリリースからLinux x64版cloudflaredを自動取得し、localhost:8082へ転送します。Colabプロキシ・iframeは使いません。発行されたHTTPS originだけをAmuseに許可します。内部オプション名の `--colab-origin` は互換性のため維持しています。
+
+公開URLを知る人はアプリを操作できます（ログイン認証なし）。URLを共有しないでください。再実行時はこのセルが起動したサーバーとトンネルを停止し、新しいURLを取得します。「6. 停止」で両方を停止します。トンネルログは `WORK/logs/cloudflared.log` に保存します。起動に失敗したらこのログを確認してください。Quick Tunnelは一時利用向けで、サービスの可用性は保証されません。
 
 取得するブランチは設定セルの `GIT_REF` で指定します。既定値はColab対応を含む `webui` です。再実行時は同じcloneを再利用し、実行コミットを表示します。別ブランチや最新のソースを新規取得する場合は、`WORK` を別の保存先に変更してください。
 

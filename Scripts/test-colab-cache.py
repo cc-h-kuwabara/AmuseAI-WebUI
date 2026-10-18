@@ -16,6 +16,41 @@ import colab_runtime as runtime
 
 
 class CacheTests(unittest.TestCase):
+    def test_cloudflare_url_and_owned_process_cleanup(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / 'tools').mkdir()
+            (root / 'tools/cloudflared').touch()
+            tunnel = runtime.CloudflareTunnel(root, 8082)
+            with patch.object(runtime.subprocess, 'Popen') as spawn:
+                spawn.return_value.poll.return_value = None
+
+                def start(*args, **kwargs):
+                    kwargs['stdout'].write(b'INF https://test-tunnel.trycloudflare.com\n')
+                    return spawn.return_value
+
+                spawn.side_effect = start
+                tunnel.start(timeout=1)
+                self.assertEqual(tunnel.url, 'https://test-tunnel.trycloudflare.com')
+                self.assertIn('http://127.0.0.1:8082', spawn.call_args.args[0])
+                tunnel.stop()
+                spawn.return_value.terminate.assert_called_once()
+                self.assertIsNone(tunnel.process)
+                self.assertIsNone(tunnel.url)
+
+    def test_cloudflare_timeout_stops_process(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / 'tools').mkdir()
+            (root / 'tools/cloudflared').touch()
+            tunnel = runtime.CloudflareTunnel(root)
+            with patch.object(runtime.subprocess, 'Popen') as spawn:
+                spawn.return_value.poll.return_value = None
+                with self.assertRaises(TimeoutError):
+                    tunnel.start(timeout=0)
+                spawn.return_value.terminate.assert_called_once()
+                self.assertIsNone(tunnel.log)
+
     def test_build_output_goes_to_log_and_failure_is_preserved(self):
         with tempfile.TemporaryDirectory() as tmp:
             log = Path(tmp) / 'logs/build.log'
