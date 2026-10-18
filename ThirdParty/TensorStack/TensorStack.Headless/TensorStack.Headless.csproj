@@ -1,0 +1,2 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><AllowUnsafeBlocks>true</AllowUnsafeBlocks><RootNamespace>TensorStack.WPF</RootNamespace></PropertyGroup><ItemGroup><Compile Remove="Services/ComponentService.cs"/><ProjectReference Include="../TensorStack.Media/TensorStack.Media.csproj"/><PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13"/></ItemGroup></Project>
+

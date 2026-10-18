@@ -1,5 +1,4 @@
 ﻿using Amuse.App.Common;
-using Amuse.App.Dialogs;
 using Amuse.App.Services;
 using Amuse.Common;
 using Amuse.Common.Config;
@@ -47,7 +46,7 @@ namespace Amuse.App.Runtime
             var createOptions = _environmentService.CreatePipelineOptions(environment);
             var clientConfig = new ClientConfig
             {
-                ServerPath = App.DirectoryServer,
+                ServerPath = AppRuntime.DirectoryServer,
                 ServerType = ServerType.StableDiffusionCpp,
                 IsDebugMode = Settings.IsServerDebugEnabled,
                 ServerVariables = createOptions.Variables
@@ -65,23 +64,7 @@ namespace Amuse.App.Runtime
             if ((environment.Status == BackendStatus.Create || environment.Status == BackendStatus.Load) && _environmentService.Exists(environment))
                 return environment;
 
-            var environmentDialog = DialogService.GetDialog<EnvironmentDialog>();
-            if (environment.Status == BackendStatus.Update)
-            {
-                if (await environmentDialog.UpdateAsync(environment))
-                    return environment;
-            }
-            else if (environment.Status == BackendStatus.Rebuild)
-            {
-                if (await environmentDialog.RebuildAsync(environment))
-                    return environment;
-            }
-            else
-            {
-                if (await environmentDialog.CreateAsync(environment))
-                    return environment;
-            }
-            return null;
+            return await AppRuntime.PrepareEnvironment(environment) ? environment : null;
         }
 
     }

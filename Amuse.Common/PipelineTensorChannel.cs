@@ -13,6 +13,13 @@ namespace Amuse.Common
         private readonly string _requestMapName;
         private readonly string _responseMapName;
 
+        public void Cleanup()
+        {
+            if (OperatingSystem.IsWindows()) return;
+            System.IO.File.Delete(MappingPath(_requestMapName));
+            System.IO.File.Delete(MappingPath(_responseMapName));
+        }
+
         public PipelineTensorChannel(ServerConfig serverConfig)
         {
             _requestMapName = $"{serverConfig.ChannelTensor}.ClientToServer";
@@ -81,6 +88,27 @@ namespace Amuse.Common
         /// <param name="tensors">The tensors to write to shared memory.</param>
         /// <returns>MemoryMappedFile.</returns>
         /// <exception cref="System.ArgumentNullException"></exception>
+        private static string MappingPath(string name)
+        {
+            var directory = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Amuse-Tensors-" + Environment.UserName);
+            if (!OperatingSystem.IsWindows()) System.IO.Directory.CreateDirectory(directory, System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite | System.IO.UnixFileMode.UserExecute);
+            return System.IO.Path.Combine(directory, name);
+        }
+        private static MemoryMappedFile CreateMapping(string name, long bytes)
+        {
+            if (OperatingSystem.IsWindows()) return MemoryMappedFile.CreateNew(name, bytes, MemoryMappedFileAccess.ReadWrite);
+            var path = MappingPath(name);
+            var stream = new System.IO.FileStream(path, System.IO.FileMode.Create, System.IO.FileAccess.ReadWrite, System.IO.FileShare.ReadWrite);
+            try {
+                System.IO.File.SetUnixFileMode(path, System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite);
+                stream.SetLength(bytes);
+                return MemoryMappedFile.CreateFromFile(stream, null, bytes, MemoryMappedFileAccess.ReadWrite, System.IO.HandleInheritability.None, false);
+            } catch { stream.Dispose(); throw; }
+        }
+        private static MemoryMappedFile OpenMapping(string name) => OperatingSystem.IsWindows()
+            ? MemoryMappedFile.OpenExisting(name, MemoryMappedFileRights.Read)
+            : MemoryMappedFile.CreateFromFile(MappingPath(name), System.IO.FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
+
         private static MemoryMappedFile WriteToMappedFile(string mapName, IReadOnlyList<Tensor<float>> tensors)
         {
             ArgumentNullException.ThrowIfNull(tensors);
@@ -94,7 +122,7 @@ namespace Amuse.Common
             if (totalBytes == 0)
                 totalBytes = sizeof(float);
 
-            var memoryMappedFile = MemoryMappedFile.CreateNew(mapName, totalBytes, MemoryMappedFileAccess.ReadWrite);
+            var memoryMappedFile = CreateMapping(mapName, totalBytes);
             try
             {
                 using (var accessor = memoryMappedFile.CreateViewAccessor(0, totalBytes, MemoryMappedFileAccess.ReadWrite))
@@ -147,7 +175,7 @@ namespace Amuse.Common
             if (totalBytes == 0)
                 totalBytes = sizeof(float);
 
-            using (var mmf = MemoryMappedFile.OpenExisting(mapName, MemoryMappedFileRights.Read))
+            using (var mmf = OpenMapping(mapName))
             using (var accessor = mmf.CreateViewAccessor(0, totalBytes, MemoryMappedFileAccess.Read))
             {
                 byte* ptr = null;

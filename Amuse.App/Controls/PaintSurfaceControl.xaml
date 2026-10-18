@@ -11,7 +11,7 @@
              xmlns:CommonControls="clr-namespace:TensorStack.WPF.Controls;assembly=TensorStack.WPF"
              xmlns:CommonConverters="clr-namespace:TensorStack.WPF.Converters;assembly=TensorStack.WPF"
              xmlns:Controls="clr-namespace:Amuse.App.Controls"
-             xmlns:Common="clr-namespace:Amuse.App.Common"
+             xmlns:Common="clr-namespace:Amuse.App.Common;assembly=Amuse.Core"
              xmlns:Views="clr-namespace:Amuse.App.Views"
              Focusable="True"
              AllowDrop="True">

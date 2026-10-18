@@ -9,7 +9,7 @@
              xmlns:Extractors="clr-namespace:TensorStack.OnnxRuntime.Extract;assembly=TensorStack.OnnxRuntime.Vision"
              xmlns:Whisper="clr-namespace:TensorStack.OnnxRuntime.LLM.Pipelines.Whisper;assembly=TensorStack.OnnxRuntime.LLM"
              xmlns:TextGeneration="clr-namespace:TensorStack.OnnxRuntime.LLM.Common;assembly=TensorStack.OnnxRuntime.LLM"
-             xmlns:Common="clr-namespace:Amuse.App.Common"
+             xmlns:Common="clr-namespace:Amuse.App.Common;assembly=Amuse.Core"
              xmlns:Controls="clr-namespace:Amuse.App.Controls"
              ShutdownMode="OnMainWindowClose">
     <Application.Resources>

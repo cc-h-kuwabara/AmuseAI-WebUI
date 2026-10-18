@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Amuse — Local AI Studio</title>
+  <link rel="icon" href="/icon.png"><link rel="stylesheet" href="/app.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#generate"><img src="/icon.png" alt=""><span>Amuse<small>LOCAL AI STUDIO</small></span></a>
+    <div class="section-label">WORKSPACE</div>
+    <nav aria-label="メインナビゲーション">
+      <a href="#generate" data-page="generate"><span>✧</span> 生成スタジオ</a>
+      <a href="#process" data-page="process"><span>↗</span> メディア加工</a>
+      <a href="#editor" data-page="editor"><span>▧</span> 画像エディター</a>
+      <a href="#video" data-page="video"><span>▹</span> 動画エディター</a>
+      <a href="#gallery" data-page="gallery"><span>▦</span> ギャラリー</a>
+      <a href="#jobs" data-page="jobs"><span>≡</span> ジョブ・履歴 <b id="queue-count">0</b></a>
+    </nav>
+    <div class="section-label">MANAGE</div>
+    <nav aria-label="管理">
+      <a href="#models" data-page="models"><span>◇</span> モデル</a>
+      <a href="#environments" data-page="environments"><span>⌘</span> 実行環境</a>
+      <a href="#settings" data-page="settings"><span>⚙</span> 設定</a>
+    </nav>
+    <div class="local-status"><i></i><div>このPCで実行<small id="connection">接続しています…</small></div></div>
+  </aside>
+  <main>
+    <header><div><div class="eyebrow">YOUR IDEAS, LOCALLY.</div><h1 id="page-title">生成スタジオ</h1></div><button id="refresh" class="quiet">↻ 更新</button></header>
+    <div id="notice" role="status" aria-live="polite" hidden></div>
+    <section id="generate" class="page">
+      <div class="studio">
+        <form id="generate-form" class="panel">
+          <div class="panel-heading"><h2>新しい作品をつくる</h2><span class="badge">LOCAL</span></div>
+          <label>ワークフロー<select id="workflow"></select></label>
+          <label>モデル<select id="model" required></select></label>
+          <p class="hint" id="model-hint"></p>
+          <div class="row"><label>??????<select id="device" required></select></label><label>品質<select id="quality"><option>Standard</option><option>Draft</option><option>Production</option></select></label></div>
+          <label>プロンプト<textarea id="prompt" rows="5" placeholder="何をつくりますか？ 光、構図、雰囲気を自由に描写してください。"></textarea></label>
+          <label>ネガティブプロンプト<textarea id="negative" rows="2" placeholder="除外したい要素（対応モデルのみ）"></textarea></label>
+          <div class="row"><label>幅<input id="width" type="number" min="0" max="16384" step="8" value="512"></label><label>高さ<input id="height" type="number" min="0" max="16384" step="8" value="512"></label><label>ステップ<input id="steps" type="number" min="0" max="1000" value="20"></label></div>
+          <div class="row"><label>Seed<input id="seed" type="number" min="0" max="2147483647" value="0"></label><label>CFG<input id="guidance" type="number" step="0.1" value="7"></label><label>生成回数<input id="count" type="number" min="1" max="100" value="1"></label></div>
+          <p class="hint">Seed 0はランダム。生成結果と使用した設定を履歴に保存します。</p>
+          <details id="input-details"><summary>入力メディア・マスク・ControlNet</summary>
+            <label>入力ファイルを追加<input id="input-upload" type="file" accept="image/*,audio/*,video/*" multiple></label>
+            <label>入力画像（複数選択可）<select id="input-images" multiple size="4"></select></label>
+            <label>Inpaint用マスク（原画像の後に使用）<select id="input-mask"></select></label>
+            <label>入力音声<select id="input-audios" multiple size="3"></select></label>
+            <label>入力動画<select id="input-videos" multiple size="3"></select></label>
+            <label>ControlNet<select id="control-model"></select></label>
+            <label>ControlNet入力画像<select id="input-controls" multiple size="3"></select></label>
+          </details>
+          <details><summary>LoRA・メモリー</summary><label>LoRA（複数選択可）<select id="loras" multiple size="4"></select></label><label>メモリーモード<select id="memory"><option>Auto</option><option>Balanced</option><option>Low</option><option>Medium</option><option>High</option></select></label></details>
+          <details><summary>動画・音声・テキストの設定</summary><div class="row"><label>フレーム数<input id="frames" type="number" min="0" value="0"></label><label>FPS<input id="fps" type="number" min="0" step="0.1" value="0"></label><label>長さ（秒）<input id="duration" type="number" min="0" step="0.1" value="0"></label></div><label>指示・システムプロンプト<textarea id="instruction" rows="2"></textarea></label><label>最大トークン数<input id="max-length" type="number" min="0" value="512"></label><label>会話履歴（User / Assistant / System のJSON配列）<textarea id="conversation" rows="3" spellcheck="false">[]</textarea></label></details>
+          <details><summary>詳細パラメーター</summary><p class="hint">モデルの初期値に対する上書きです。SchedulerOptions、Strength、LoRA強度などを指定できます。</p><textarea id="advanced" aria-label="詳細パラメーター" rows="6" spellcheck="false">{}</textarea><label>テキスト生成のツール<select id="tools" multiple size="4"></select></label><p class="hint">外部検索・ローカルファイル検索・アプリ起動を含みます。外部アクセスが必要なツールは設定で有効化してください。</p></details>
+          <div id="conversation-transcript"></div><button id="conversation-clear" type="button" hidden>会話をクリア</button>
+          <button class="primary full" id="generate-button" type="submit">✧ 生成をキューに追加</button>
+        </form>
+        <div class="preview-column"><div class="panel result-panel"><div class="panel-heading"><h2>プレビュー</h2><span class="muted" id="result-status">READY WHEN YOU ARE</span></div><div id="result" class="result"><div class="empty"><span class="empty-symbol">✧</span><h3>アイデアを、かたちに。</h3><p>モデルを選び、プロンプトを入力して<br>最初の作品をつくりましょう。</p></div></div></div><div class="panel"><div class="panel-heading"><h2>現在のジョブ</h2><a href="#jobs">すべて見る →</a></div><div id="current-jobs"></div></div></div>
+      </div>
+    </section>
+    <section id="process" class="page" hidden><form id="process-form" class="panel narrow"><h2>画像・動画を加工</h2><label>処理<select id="operation"><option value="upscale">アップスケール</option><option value="extract">特徴抽出・背景除去</option><option value="interpolate">動画のフレーム補間</option></select></label><label>モデル<select id="process-model"></select></label><label>??????<select id="process-device"></select></label><label>入力画像・動画<select id="process-file"></select></label><label>ファイルを追加<input id="process-upload" type="file" accept="image/*,video/*"></label><label>補間倍率<input id="multiplier" type="number" min="2" max="16" value="2"></label><details><summary>詳細パラメーター</summary><p class="hint">空のままでモデルの初期値を使用します。</p><textarea id="process-options" rows="5" spellcheck="false"></textarea></details><button class="primary full">処理をキューに追加</button></form></section>
+    <section id="editor" class="page" hidden><div class="panel"><div class="panel-heading"><h2>画像の描画・合成・マスク</h2><button id="canvas-save" class="primary">PNGを保存</button></div><div class="toolbar"><label>画像を追加<input id="canvas-file" type="file" accept="image/*"></label><label>ツール<select id="canvas-tool"><option value="draw">描画</option><option value="erase">消しゴム</option><option value="text">テキスト</option></select></label><label>色<input id="canvas-color" type="color" value="#ffffff"></label><label>太さ<input id="canvas-size" type="number" min="1" max="200" value="20"></label><button id="canvas-undo">元に戻す</button><button id="canvas-clear">クリア</button></div><div class="toolbar"><label>幅<input id="canvas-width" type="number" min="64" max="8192" value="768"></label><label>高さ<input id="canvas-height" type="number" min="64" max="8192" value="768"></label><button id="canvas-resize">サイズを適用</button><button id="canvas-mask">黒いマスクで開始</button><button id="canvas-to-input">生成の入力に使う</button></div><div class="canvas-wrap"><canvas id="canvas" width="768" height="768" aria-label="描画キャンバス"></canvas></div><p class="hint">画像を追加すると現在のキャンバスに重ねます。マスクは黒い背景に白で編集範囲を描画し、生成画面で原画像の次に選択してください。</p></div></section>
+    <section id="video" class="page" hidden><div class="panel"><h2>クリップをつなぐ</h2><p class="hint">画像・動画を並べ、使用する範囲と長さを設定して書き出します。</p><label>メディアを追加<input id="video-upload" type="file" accept="image/*,video/*" multiple></label><label>ギャラリーから追加<select id="video-source"></select></label><button id="video-add">クリップを追加</button><div id="clips"></div><div class="row"><label>幅<input id="video-width" type="number" min="64" max="4096" value="768"></label><label>高さ<input id="video-height" type="number" min="64" max="4096" value="512"></label><label>FPS<input id="video-fps" type="number" min="1" max="120" value="24"></label></div><label>BGM（任意）<select id="video-audio"></select></label><button id="video-export" class="primary">動画を書き出す</button></div></section>
+    <section id="gallery" class="page" hidden><div class="panel-heading"><p class="muted" id="file-count"></p><button id="show-trash">ごみ箱・復元</button><label class="upload-button">ファイルを追加<input id="gallery-upload" type="file" multiple accept="image/*,video/*,audio/*,.txt,.json"></label></div><div id="gallery-grid" class="gallery-grid"></div><div id="trash-list" hidden></div></section>
+    <section id="jobs" class="page" hidden><p class="muted">生成・加工・環境作成は順番に実行します。画面を閉じてもサーバーが動いている間は処理が続きます。</p><div id="job-list"></div></section>
+    <section id="models" class="page" hidden><div class="panel-heading"><p class="muted">ローカルのモデルを管理・ダウンロード</p><button id="model-edit">モデル設定を編集</button></div><div class="row"><label>カテゴリー<select id="model-category"><option value="diffusion">画像・動画・音声生成</option><option value="language">テキスト</option><option value="upscale">アップスケール</option><option value="extract">特徴抽出</option><option value="lora">LoRA</option><option value="controlNet">ControlNet</option><option value="component">コンポーネント</option></select></label><label>検索<input id="model-search" type="search" placeholder="モデル名で絞り込み"></label></div><div id="model-list"></div></section>
+    <section id="environments" class="page" hidden><p class="muted">モデルに対応する環境を作成します。初回作成・更新にはインターネット接続が必要な場合があります。</p><div id="environment-list"></div></section>
+    <section id="settings" class="page" hidden><div class="panel narrow"><label>設定項目<select id="config-section"><option value="general">一般</option><option value="tokens">アクセストークン</option><option value="diffusion">生成モデル</option><option value="language">言語モデル</option><option value="upscale">アップスケールモデル</option><option value="extract">特徴抽出モデル</option><option value="lora">LoRA</option><option value="controlNet">ControlNet</option><option value="component">コンポーネント</option><option value="environments">実行環境</option><option value="templates">テンプレート</option></select></label><div id="settings-fields"></div><details id="config-advanced"><summary>設定データを編集</summary><p class="hint">既存と同じ設定形式です。モデルの追加・削除・詳細変更に使用できます。保存前の設定をバックアップします。</p><textarea id="config-json" rows="20" spellcheck="false"></textarea></details><button id="config-save" class="primary full">設定を保存</button></div></section>
+    <footer>Amuse · あなたのPCで動く、あなたのスタジオ。</footer>
+  </main>
+  <dialog id="text-dialog"><button id="close-dialog" class="quiet">閉じる</button><pre id="text-content"></pre></dialog>
+</body>
+</html>

@@ -120,13 +120,13 @@ namespace Amuse.App.Views
         };
 
 
-        internal static View GetCurrentView(ViewCategory category)
+        public static View GetCurrentView(ViewCategory category)
         {
             return CurrentViewMap[category];
         }
 
 
-        internal static ViewCategory SetCurrentView(View view)
+        public static ViewCategory SetCurrentView(View view)
         {
             var category = ViewCategoryMap[view];
             CurrentViewMap[category] = view;
@@ -134,7 +134,7 @@ namespace Amuse.App.Views
         }
 
 
-        internal static ViewCategory GetViewCategory(View view)
+        public static ViewCategory GetViewCategory(View view)
         {
             return ViewCategoryMap[view];
         }

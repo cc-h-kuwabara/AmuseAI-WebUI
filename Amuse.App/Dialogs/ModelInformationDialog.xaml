@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Amuse.App.Dialogs"
         xmlns:CommonControls="clr-namespace:TensorStack.WPF.Controls;assembly=TensorStack.WPF"
         xmlns:Controls="clr-namespace:Amuse.App.Controls"
-        xmlns:Common="clr-namespace:Amuse.App.Common"
+        xmlns:Common="clr-namespace:Amuse.App.Common;assembly=Amuse.Core"
         mc:Ignorable="d"
         MinWidth="800"
         MaxWidth="800"

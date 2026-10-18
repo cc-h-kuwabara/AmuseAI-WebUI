@@ -83,7 +83,7 @@ namespace Amuse.App.Services
                     _currentPipeline = InterpolationPipeline.Create(new ModelConfig
                     {
                         ExecutionProvider = device.GetProvider(),
-                        Path = Path.Combine(App.DirectoryBase, "Interpolation.onnx")
+                        Path = Path.Combine(AppRuntime.DirectoryBase, "Interpolation.onnx")
                     });
                     await Task.Run(() => _currentPipeline.LoadAsync(cancellationToken), cancellationToken);
                 }

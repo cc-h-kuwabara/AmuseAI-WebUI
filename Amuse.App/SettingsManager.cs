@@ -15,9 +15,9 @@ namespace Amuse.App
 
         public static Settings Load()
         {
-            var appDefaultsFile = Path.Combine(App.DirectoryData, "Settings.default.json");
-            var appDefaultsBakupFile = Path.Combine(App.DirectoryData, "Settings.backup.json");
-            var appSettingsFile = Path.Combine(App.DirectoryData, "Settings.json");
+            var appDefaultsFile = Path.Combine(AppRuntime.DirectoryData, "Settings.default.json");
+            var appDefaultsBakupFile = Path.Combine(AppRuntime.DirectoryData, "Settings.backup.json");
+            var appSettingsFile = Path.Combine(AppRuntime.DirectoryData, "Settings.json");
 
             try
             {
@@ -62,8 +62,8 @@ namespace Amuse.App
             FileLock.Wait();
             try
             {
-                var tempJson = Path.Combine(App.DirectoryData, "Settings.temp");
-                var settingsJson = Path.Combine(App.DirectoryData, "Settings.json");
+                var tempJson = Path.Combine(AppRuntime.DirectoryData, "Settings.temp");
+                var settingsJson = Path.Combine(AppRuntime.DirectoryData, "Settings.json");
                 Json.Save(tempJson, settings);
                 File.Move(tempJson, settingsJson, true);
             }
@@ -79,8 +79,8 @@ namespace Amuse.App
             await FileLock.WaitAsync();
             try
             {
-                var tempJson = Path.Combine(App.DirectoryData, "Settings.temp");
-                var settingsJson = Path.Combine(App.DirectoryData, "Settings.json");
+                var tempJson = Path.Combine(AppRuntime.DirectoryData, "Settings.temp");
+                var settingsJson = Path.Combine(AppRuntime.DirectoryData, "Settings.json");
                 await Json.SaveAsync(tempJson, settings);
                 File.Move(tempJson, settingsJson, true);
             }

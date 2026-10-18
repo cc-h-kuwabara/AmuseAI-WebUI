@@ -61,6 +61,30 @@ namespace Amuse.App
             _directoryBase = AppDomain.CurrentDomain.BaseDirectory;
             _directoryData = GetApplicationDataDirectory();
             _directoryLogs = Path.Combine(_directoryData, "Logs");
+            AppRuntime.DirectoryBase = _directoryBase;
+            AppRuntime.DirectoryData = _directoryData;
+            AppRuntime.DirectoryServer = DirectoryServer;
+            AppRuntime.Dispatch = action => Dispatcher.Invoke(action);
+            AppRuntime.PrepareEnvironment = async environment =>
+            {
+                var dialog = DialogService.GetDialog<EnvironmentDialog>();
+                return environment.Status switch
+                {
+                    TensorStack.Common.BackendStatus.Update => await dialog.UpdateAsync(environment),
+                    TensorStack.Common.BackendStatus.Rebuild => await dialog.RebuildAsync(environment),
+                    _ => await dialog.CreateAsync(environment)
+                };
+            };
+            AppRuntime.RequestAccessToken = async model =>
+                await DialogService.GetDialog<GatedModelDialog>().ShowDialogAsync(model);
+            AppRuntime.ConfirmExternalAccess = async name =>
+            {
+                var result = await DialogService.ShowMessageAsync("External Access",
+                    $"{name} will access external data or services.\nData from this request may be sent to retrieve or process the requested information.\n\nDo you want to continue?",
+                    TensorStack.WPF.Dialogs.MessageDialogType.YesNo, TensorStack.WPF.Dialogs.MessageBoxIconType.Warning,
+                    TensorStack.WPF.Dialogs.MessageBoxStyleType.Warning, true);
+                return ((bool)result, result.DontAskAgain);
+            };
 
             // Host
             var builder = Host.CreateApplicationBuilder();

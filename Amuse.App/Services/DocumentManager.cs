@@ -38,8 +38,12 @@ namespace Amuse.App.Services
             }
             catch (Exception ex)
             {
+#if AMUSE_PORTABLE
+                throw new InvalidDataException($"Could not parse document: {filename}", ex);
+#else
                 await DialogService.ShowErrorAsync(AppErrors.ParseErrorTitle, $"{AppErrors.ParseErrorDocument}\n {ex.Message}");
                 return default;
+#endif
             }
         }
     }

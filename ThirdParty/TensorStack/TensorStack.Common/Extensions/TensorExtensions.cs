@@ -1,0 +1,1274 @@
+﻿// Copyright (c) Adam Clark. All rights reserved.
+// Licensed under the Apache 2.0 License.
+using System;
+using System.Buffers;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using TensorStack.Common.Tensor;
+using TensorStack.Common.Vision;
+using TensorPrimitives = System.Numerics.Tensors.TensorPrimitives;
+
+namespace TensorStack.Common
+{
+    /// <summary>
+    /// Helper extensions for Tensor and TensorSpan, Math, Copy etc.
+    /// </summary>
+    public static class TensorExtensions
+    {
+        #region Divide
+
+        /// <summary>
+        /// Divides the specified value from all tensor values.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>TensorSpan&lt;System.Single&gt;.</returns>
+        public static TensorSpan<float> Divide(this TensorSpan<float> tensor, float value)
+        {
+            TensorPrimitives.Divide(tensor.Span, value, tensor.Span);
+            return tensor;
+        }
+
+
+        /// <summary>
+        /// Divides the specified value
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>Tensor&lt;System.Single&gt;.</returns>
+        public static Tensor<float> Divide(this Tensor<float> tensor, float value)
+        {
+            TensorPrimitives.Divide(tensor.Span, value, tensor.Memory.Span);
+            return tensor;
+        }
+
+        /// <summary>
+        /// COPY: Divides the specified value to new tensor.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>Tensor&lt;System.Single&gt;.</returns>
+        public static Tensor<float> DivideTo(this Tensor<float> tensor, float value)
+        {
+            var result = new Tensor<float>(tensor.Dimensions);
+            TensorPrimitives.Divide(tensor.Span, value, result.Memory.Span);
+            return result;
+        }
+
+        #endregion
+
+        #region Multiply
+
+        /// <summary>
+        /// Multiplies each Tensor value by the specified value.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>TensorSpan&lt;System.Single&gt;.</returns>
+        public static TensorSpan<float> Multiply(this TensorSpan<float> tensor, float value)
+        {
+            TensorPrimitives.Multiply(tensor.Span, value, tensor.Span);
+            return tensor;
+        }
+
+
+        /// <summary>
+        /// Multiplies each Tensor value.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>Tensor&lt;System.Single&gt;.</returns>
+        public static Tensor<float> Multiply(this Tensor<float> tensor, float value)
+        {
+            TensorPrimitives.Multiply(tensor.Span, value, tensor.Memory.Span);
+            return tensor;
+        }
+
+
+        /// <summary>
+        /// COPY: Multiplies each Tensor value to new tensor.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>Tensor&lt;System.Single&gt;.</returns>
+        public static Tensor<float> MultiplyTo(this Tensor<float> tensor, float value)
+        {
+            var result = new Tensor<float>(tensor.Dimensions);
+            TensorPrimitives.Multiply(tensor.Span, value, result.Memory.Span);
+            return result;
+        }
+
+        #endregion
+
+        #region Add
+
+        /// <summary>
+        /// Adds TensorB to tensorA
+        /// </summary>
+        /// <param name="tensorA">The tensor a.</param>
+        /// <param name="tensorB">The tensor b.</param>
+        /// <returns>TensorSpan&lt;System.Single&gt;.</returns>
+        public static TensorSpan<float> Add(this TensorSpan<float> tensorA, TensorSpan<float> tensorB)
+        {
+            TensorPrimitives.Add(tensorA.Span, tensorB.Span, tensorA.Span);
+            return tensorA;
+        }
+
+
+        /// <summary>
+        /// Adds the specified value to each Tensor value.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>TensorSpan&lt;System.Single&gt;.</returns>
+        public static TensorSpan<float> Add(this TensorSpan<float> tensor, float value)
+        {
+            TensorPrimitives.Add(tensor.Span, value, tensor.Span);
+            return tensor;
+        }
+
+
+        /// <summary>
+        /// Adds TensorB to tensorA
+        /// </summary>
+        /// <param name="tensorA">The tensor a.</param>
+        /// <param name="tensorB">The tensor b.</param>
+        /// <returns>Tensor&lt;System.Single&gt;.</returns>
+        public static Tensor<float> Add(this Tensor<float> tensorA, Tensor<float> tensorB)
+        {
+            TensorPrimitives.Add(tensorA.Span, tensorB.Span, tensorA.Memory.Span);
+            return tensorA;
+        }
+
+
+        /// <summary>
+        /// Adds TensorB to tensorA to new tensor
+        /// </summary>
+        /// <param name="tensorA">The tensor a.</param>
+        /// <param name="tensorB">The tensor b.</param>
+        /// <returns>Tensor&lt;System.Single&gt;.</returns>
+        public static Tensor<float> AddTo(this Tensor<float> tensorA, Tensor<float> tensorB)
+        {
+            var result = new Tensor<float>(tensorA.Dimensions);
+            TensorPrimitives.Add(tensorA.Span, tensorB.Span, result.Memory.Span);
+            return result;
+        }
+
+
+        /// <summary>
+        /// Adds the specified value to each Tensor value.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>Tensor&lt;System.Single&gt;.</returns>
+        public static Tensor<float> Add(this Tensor<float> tensor, float value)
+        {
+            TensorPrimitives.Add(tensor.Span, value, tensor.Memory.Span);
+            return tensor;
+        }
+
+
+        /// <summary>
+        /// Adds the value to the Tensor to new tensor
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>Tensor&lt;System.Single&gt;.</returns>
+        public static Tensor<float> AddTo(this Tensor<float> tensor, float value)
+        {
+            var result = new Tensor<float>(tensor.Dimensions);
+            TensorPrimitives.Add(tensor.Span, value, result.Memory.Span);
+            return result;
+        }
+
+        #endregion
+
+        #region Subtract
+
+        /// <summary>
+        /// Subtracts TensorB from TensorA
+        /// </summary>
+        /// <param name="tensorA">The tensor a.</param>
+        /// <param name="tensorB">The tensor b.</param>
+        /// <returns>TensorSpan&lt;System.Single&gt;.</returns>
+        public static TensorSpan<float> Subtract(this TensorSpan<float> tensorA, TensorSpan<float> tensorB)
+        {
+            TensorPrimitives.Subtract(tensorA.Span, tensorB.Span, tensorA.Span);
+            return tensorA;
+        }
+
+
+        /// <summary>
+        /// COPY: Subtracts TensorB from TensorA to a new tensor
+        /// </summary>
+        /// <param name="tensorA">The tensor a.</param>
+        /// <param name="tensorB">The tensor b.</param>
+        /// <returns>TensorSpan&lt;System.Single&gt;.</returns>
+        public static TensorSpan<float> SubtractTo(this TensorSpan<float> tensorA, TensorSpan<float> tensorB)
+        {
+            var result = new TensorSpan<float>(tensorA.Dimensions);
+            TensorPrimitives.Subtract(tensorA.Span, tensorB.Span, result.Span);
+            return result;
+        }
+
+
+        /// <summary>
+        /// Subtracts the value from the Tensor
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>TensorSpan&lt;System.Single&gt;.</returns>
+        public static TensorSpan<float> Subtract(this TensorSpan<float> tensor, float value)
+        {
+            TensorPrimitives.Subtract(tensor.Span, value, tensor.Span);
+            return tensor;
+        }
+
+
+        /// <summary>
+        /// COPY: Subtracts the value from the Tensor to a new tensor.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>TensorSpan&lt;System.Single&gt;.</returns>
+        public static TensorSpan<float> SubtractTo(this TensorSpan<float> tensor, float value)
+        {
+            var result = new TensorSpan<float>(tensor.Dimensions);
+            TensorPrimitives.Subtract(tensor.Span, value, result.Span);
+            return result;
+        }
+
+
+        /// <summary>
+        /// Subtracts TensorB from TensorA
+        /// </summary>
+        /// <param name="tensorA">The tensor a.</param>
+        /// <param name="tensorB">The tensor b.</param>
+        /// <returns>Tensor&lt;System.Single&gt;.</returns>
+        public static Tensor<float> Subtract(this Tensor<float> tensorA, Tensor<float> tensorB)
+        {
+            TensorPrimitives.Subtract(tensorA.Span, tensorB.Span, tensorA.Memory.Span);
+            return tensorA;
+        }
+
+
+        /// <summary>
+        /// COPY: Subtracts TensorB from TensorA to a new tensor
+        /// </summary>
+        /// <param name="tensorA">The tensor a.</param>
+        /// <param name="tensorB">The tensor b.</param>
+        /// <returns>Tensor&lt;System.Single&gt;.</returns>
+        public static Tensor<float> SubtractTo(this Tensor<float> tensorA, Tensor<float> tensorB)
+        {
+            var result = new Tensor<float>(tensorA.Dimensions);
+            TensorPrimitives.Subtract(tensorA.Span, tensorB.Span, result.Memory.Span);
+            return result;
+        }
+
+
+        /// <summary>
+        /// Subtracts the specified value from the Tensor.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>Tensor&lt;System.Single&gt;.</returns>
+        public static Tensor<float> Subtract(this Tensor<float> tensor, float value)
+        {
+            TensorPrimitives.Subtract(tensor.Span, value, tensor.Memory.Span);
+            return tensor;
+        }
+
+
+        /// <summary>
+        /// COPY: Subtracts the specified value from the Tensor to a new tensor.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>Tensor&lt;System.Single&gt;.</returns>
+        public static Tensor<float> SubtractTo(this Tensor<float> tensor, float value)
+        {
+            var result = new Tensor<float>(tensor.Dimensions);
+            TensorPrimitives.Subtract(tensor.Span, value, result.Memory.Span);
+            return result;
+        }
+
+        #endregion
+
+
+        /// <summary>
+        /// Sums the tensors.
+        /// </summary>
+        /// <param name="tensors">The tensors.</param>
+        /// <param name="dimensions">The dimensions.</param>
+        public static Tensor<float> SumTensors(this Tensor<float>[] tensors, ReadOnlySpan<int> dimensions)
+        {
+            var result = new Tensor<float>(dimensions);
+            for (int m = 0; m < tensors.Length; m++)
+            {
+                TensorPrimitives.Add(result.Span, tensors[m].Span, result.Memory.Span);
+            }
+            return result;
+        }
+
+
+        /// <summary>
+        /// Clips to the specified minimum/maximum value.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="minValue">The minimum value.</param>
+        /// <param name="maxValue">The maximum value.</param>
+        public static Tensor<float> ClipTo(this Tensor<float> tensor, float minValue, float maxValue)
+        {
+            var clipTensor = new Tensor<float>(tensor.Dimensions);
+            for (int i = 0; i < tensor.Length; i++)
+            {
+                clipTensor.SetValue(i, Math.Clamp(tensor.Memory.Span[i], minValue, maxValue));
+            }
+            return clipTensor;
+        }
+
+
+        /// <summary>
+        /// Split first tensor from batch and return
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <returns></returns>
+        public static Tensor<T> FirstBatch<T>(this Tensor<T> tensor)
+        {
+            return Split(tensor).FirstOrDefault();
+        }
+
+        public static Tensor<T> LastBatch<T>(this Tensor<T> tensor)
+        {
+            return Split(tensor).LastOrDefault();
+        }
+
+
+        /// <summary>
+        /// Reshapes to new tensor.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="dimensions">The dimensions.</param>
+        /// <returns>Tensor&lt;System.Single&gt;.</returns>
+        public static Tensor<float> ReshapeTo(this Tensor<float> tensor, ReadOnlySpan<int> dimensions)
+        {
+            return new Tensor<float>(tensor.Memory.ToArray(), dimensions);
+        }
+
+
+        /// <summary>
+        /// Reshapes to the specified dimensions.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="dimensions">The dimensions.</param>
+        /// <returns>Tensor&lt;System.Single&gt;.</returns>
+        public static Tensor<float> Reshape(this Tensor<float> tensor, ReadOnlySpan<int> dimensions)
+        {
+            tensor.ReshapeTensor(dimensions);
+            return tensor;
+        }
+
+
+        /// <summary>
+        /// Copy TensorSpan to Tensor.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="tensor">The tensor.</param>
+        /// <returns>Tensor&lt;T&gt;.</returns>
+        public static Tensor<T> ToTensor<T>(this TensorSpan<T> tensor)
+        {
+            return new Tensor<T>(tensor.Span.ToArray(), tensor.Dimensions);
+        }
+
+
+        /// <summary>
+        /// Copy Tensor to TensorSpan.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="tensor">The tensor.</param>
+        /// <returns>TensorSpan&lt;T&gt;.</returns>
+        public static TensorSpan<T> ToTensorSpan<T>(this Tensor<T> tensor)
+        {
+            return new TensorSpan<T>(tensor.Memory.Span.ToArray(), tensor.Dimensions);
+        }
+
+
+        /// <summary>
+        /// Copy TensorSpan to TensorSpan.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="tensor">The tensor.</param>
+        /// <returns>TensorSpan&lt;T&gt;.</returns>
+        public static TensorSpan<T> ToTensorSpan<T>(this TensorSpan<T> tensor)
+        {
+            return new TensorSpan<T>(tensor.Span.ToArray(), tensor.Dimensions);
+        }
+
+
+        /// <summary>
+        /// TensorSpan view of the ImageTensor.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <returns>ImageTensor.</returns>
+        public static ImageTensor ToImageTensor(this TensorSpan<float> tensor)
+        {
+            return tensor.ToTensor().AsImageTensor();
+        }
+
+
+        /// <summary>
+        /// TensorSpan view of the Tensor.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="tensor">The tensor.</param>
+        /// <returns>TensorSpan&lt;T&gt;.</returns>
+        public static TensorSpan<T> AsTensorSpan<T>(this Tensor<T> tensor)
+        {
+            return new TensorSpan<T>(tensor.Memory.Span, tensor.Dimensions);
+        }
+
+
+        /// <summary>
+        /// ImageTensor view of the Tensor.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <returns>ImageTensor.</returns>
+        public static ImageTensor AsImageTensor(this Tensor<float> tensor)
+        {
+            return new ImageTensor(tensor);
+        }
+
+
+        /// <summary>
+        /// AudioTensor view of the Tensor.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="sampleRate">The sampleRate.</param>
+        /// <returns>AudioTensor.</returns>
+        public static AudioTensor AsAudioTensor(this Tensor<float> tensor, int sampleRate)
+        {
+            return new AudioTensor(tensor, sampleRate);
+        }
+
+
+        /// <summary>
+        /// Repeats the specified Tensor across axis 0.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="count">The count.</param>
+        /// <param name="axis">The axis.</param>
+        /// <returns>Tensor&lt;T&gt;.</returns>
+        /// <exception cref="NotImplementedException">Only axis 0 is supported</exception>
+        public static Tensor<T> Repeat<T>(this Tensor<T> tensor, int count, int axis = 0)
+        {
+            if (count == 1)
+                return tensor;
+
+            if (axis != 0)
+                throw new NotImplementedException("Only axis 0 is supported");
+
+            var dimensions = tensor.Dimensions.ToArray();
+            dimensions[0] *= count;
+
+            var length = (int)tensor.Length;
+            var totalLength = length * count;
+            var buffer = new T[totalLength].AsMemory();
+            for (int i = 0; i < count; i++)
+            {
+                tensor.Memory.CopyTo(buffer[(i * length)..]);
+            }
+            return new Tensor<T>(buffer, dimensions);
+        }
+
+
+
+        /// <summary>
+        /// Permutes the specified Tensor.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="permutation">The permutation.</param>
+        /// <returns>Tensor&lt;T&gt;.</returns>
+        public static Tensor<T> Permute<T>(this Tensor<T> tensor, int[] permutation)
+        {
+            var dimensions = tensor.Dimensions.ToArray();
+            var newDimensions = permutation.Select(i => dimensions[i]).ToArray();
+            var resultTensor = new Tensor<T>(newDimensions);
+            var originalIndex = new int[dimensions.Length];
+            var permutedIndex = new int[newDimensions.Length];
+
+            for (int i = 0; i < tensor.Length; i++)
+            {
+                int remaining = i;
+                for (int j = dimensions.Length - 1; j >= 0; j--)
+                {
+                    originalIndex[j] = remaining % dimensions[j];
+                    remaining /= dimensions[j];
+                }
+
+                for (int j = 0; j < newDimensions.Length; j++)
+                {
+                    permutedIndex[j] = originalIndex[permutation[j]];
+                }
+
+                var multiplier = 1;
+                var permutedFlatIndex = 0;
+                for (int j = newDimensions.Length - 1; j >= 0; j--)
+                {
+                    permutedFlatIndex += permutedIndex[j] * multiplier;
+                    multiplier *= newDimensions[j];
+                }
+
+                resultTensor.Memory.Span[permutedFlatIndex] = tensor.Memory.Span[i];
+            }
+            return resultTensor;
+        }
+
+
+        /// <summary>
+        /// Splits the specified Tensors across axis 0.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="axis">The axis.</param>
+        /// <returns>IEnumerable&lt;Tensor&lt;System.Single&gt;&gt;.</returns>
+        /// <exception cref="NotImplementedException">Only axis 0 is supported</exception>
+        public static IEnumerable<Tensor<T>> Split<T>(this Tensor<T> tensor, int axis = 0)
+        {
+            if (axis != 0)
+                throw new NotImplementedException("Only axis 0 is supported");
+
+            var count = tensor.Dimensions[0];
+            var dimensions = tensor.Dimensions.ToArray();
+            dimensions[0] = 1;
+
+            var newLength = (int)tensor.Length / count;
+            for (int i = 0; i < count; i++)
+            {
+                var start = i * newLength;
+                yield return new Tensor<T>(tensor.Memory.Slice(start, newLength), dimensions);
+            }
+        }
+
+
+        /// <summary>
+        /// Joins the specified Tensors across axis 0.
+        /// </summary>
+        /// <param name="tensors">The tensors.</param>
+        /// <param name="axis">The axis.</param>
+        /// <returns>Tensor&lt;System.Single&gt;.</returns>
+        /// <exception cref="NotImplementedException">Only axis 0 is supported</exception>
+        public static Tensor<float> Join(this IEnumerable<Tensor<float>> tensors, int axis = 0)
+        {
+            if (axis != 0)
+                throw new NotImplementedException("Only axis 0 is supported");
+
+            var count = tensors.Count();
+            var tensor = tensors.First();
+            var dimensions = tensor.Dimensions.ToArray();
+            dimensions[0] *= count;
+
+            var newLength = (int)tensor.Length;
+            var buffer = new Tensor<float>(dimensions);
+
+            var index = 0;
+            foreach (var item in tensors)
+            {
+                var start = index * newLength;
+                item.Memory.CopyTo(buffer.Memory[start..]);
+                index++;
+            }
+            return buffer;
+        }
+
+
+        /// <summary>
+        /// Pads the end dimenison by the specified length.
+        /// </summary>
+        /// <param name="tensor1">The tensor.</param>
+        /// <param name="padLength">Length of the pad.</param>
+        /// <exception cref="System.ArgumentException">Rank 2 or 3 currently supported</exception>
+        public static Tensor<float> PadEnd(this Tensor<float> tensor1, int padLength)
+        {
+            var dimensions = tensor1.Dimensions.ToArray();
+            dimensions[^1] += padLength;
+            var concatenatedTensor = new Tensor<float>(dimensions);
+
+            if (tensor1.Dimensions.Length == 2)
+            {
+                for (int i = 0; i < tensor1.Dimensions[0]; i++)
+                    for (int j = 0; j < tensor1.Dimensions[1]; j++)
+                        concatenatedTensor[i, j] = tensor1[i, j];
+            }
+            else if (tensor1.Dimensions.Length == 3)
+            {
+                for (int i = 0; i < tensor1.Dimensions[0]; i++)
+                    for (int j = 0; j < tensor1.Dimensions[1]; j++)
+                        for (int k = 0; k < tensor1.Dimensions[2]; k++)
+                            concatenatedTensor[i, j, k] = tensor1[i, j, k];
+            }
+            else
+            {
+                throw new ArgumentException("Rank 2 or 3 currently supported");
+            }
+
+            return concatenatedTensor;
+        }
+
+
+        /// <summary>
+        /// Generates the next random tensor
+        /// </summary>
+        /// <param name="random">The random.</param>
+        /// <param name="dimensions">The dimensions.</param>
+        /// <param name="initNoiseSigma">The initialize noise sigma.</param>
+        /// <returns>Tensor&lt;System.Single&gt;.</returns>
+        public static Tensor<float> NextTensor(this Random random, ReadOnlySpan<int> dimensions, float initialvalue = 1f)
+        {
+            var latents = new Tensor<float>(dimensions);
+            for (int i = 0; i < latents.Length; i++)
+            {
+                var u1 = random.NextSingle();
+                var u2 = random.NextSingle();
+                var radius = MathF.Sqrt(-2.0f * MathF.Log(u1));
+                var theta = 2.0f * MathF.PI * u2;
+                var standardNormalRand = radius * MathF.Cos(theta);
+                latents.SetValue(i, standardNormalRand * initialvalue);
+            }
+            return latents;
+        }
+
+
+        /// <summary>
+        /// Gets the total product for the specified dimensions.
+        /// </summary>
+        /// <param name="dimensions">The dimensions.</param>
+        /// <param name="startIndex">The start index.</param>
+        /// <returns>System.Int64.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        public static long GetProduct(this ReadOnlySpan<int> dimensions, int startIndex = 0)
+        {
+            long product = 1;
+            for (int i = startIndex; i < dimensions.Length; i++)
+            {
+                if (dimensions[i] < 0)
+                    throw new ArgumentOutOfRangeException($"{nameof(dimensions)}[{i}]");
+
+                product *= dimensions[i];
+            }
+            return product;
+        }
+
+
+        /// <summary>
+        /// Gets the strides for the specified dimensions.
+        /// </summary>
+        /// <param name="dimensions">The dimensions.</param>
+        /// <returns>System.Int32[].</returns>
+        public static int[] GetStrides(this ReadOnlySpan<int> dimensions)
+        {
+            var strides = new int[dimensions.Length];
+            if (dimensions.Length == 0)
+                return strides;
+
+            int stride = 1;
+            for (int i = strides.Length - 1; i >= 0; i--)
+            {
+                strides[i] = stride;
+                stride *= dimensions[i];
+            }
+            return strides;
+        }
+
+
+        /// <summary>
+        /// Gets the tensor index with the specified indices and strides.
+        /// </summary>
+        /// <param name="indices">The indices.</param>
+        /// <param name="strides">The strides.</param>
+        /// <param name="startFromDimension">The start from dimension.</param>
+        /// <returns>System.Int32.</returns>
+        public static int GetIndex(this ReadOnlySpan<int> indices, ReadOnlySpan<int> strides, int startFromDimension = 0)
+        {
+            int index = 0;
+            for (int i = startFromDimension; i < indices.Length; i++)
+            {
+                index += strides[i] * indices[i];
+            }
+            return index;
+        }
+
+
+        /// <summary>
+        /// Normalizes the specified Tensor values.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="normalization">The normalization.</param>
+        public static Tensor<float> Normalize(this Tensor<float> tensor, Normalization normalization)
+        {
+            tensor.Memory.Span.Normalize(normalization);
+            return tensor;
+        }
+
+
+        /// <summary>
+        /// Normalizes the specified float values.
+        /// </summary>
+        /// <param name="dataSpan">The data span.</param>
+        /// <param name="normalization">The normalization.</param>
+        /// <returns>Span&lt;System.Single&gt;.</returns>
+        public static Span<float> Normalize(this Span<float> dataSpan, Normalization normalization)
+        {
+            switch (normalization)
+            {
+                case Normalization.ZeroToOne:
+                    dataSpan.NormalizeZeroOne();
+                    break;
+                case Normalization.OneToOne:
+                    dataSpan.NormalizeOneOne();
+                    break;
+                case Normalization.MinMaxZeroToOne:
+                    dataSpan.NormalizeMinMaxToZeroToOne();
+                    break;
+                case Normalization.MinMaxOneToOne:
+                    dataSpan.NormalizeMinMaxToOneToOne();
+                    break;
+                default:
+                    break;
+            }
+            return dataSpan;
+        }
+
+
+        /// <summary>
+        /// Normalizes the values from range -1 to 1 to 0 to 1.
+        /// </summary>
+        /// <param name="span">The span.</param>
+        private static void NormalizeZeroOne(this Span<float> span)
+        {
+            for (int i = 0; i < span.Length; i++)
+            {
+                span[i] = Math.Clamp(span[i] / 2f + 0.5f, 0f, 1f);
+            }
+        }
+
+
+        /// <summary>
+        /// Normalizes the values from range 0 to 1 to -1 to 1.
+        /// </summary>
+        /// <param name="span">The span.</param>
+        private static void NormalizeOneOne(this Span<float> span)
+        {
+            for (int i = 0; i < span.Length; i++)
+            {
+                span[i] = Math.Clamp(2f * span[i] - 1f, -1f, 1f);
+            }
+        }
+
+
+        /// <summary>
+        /// Min/Max normalizaton to zero to one.
+        /// </summary>
+        /// <param name="values">The values.</param>
+        /// <returns>Span&lt;System.Single&gt;.</returns>
+        private static Span<float> NormalizeMinMaxToZeroToOne(this Span<float> values)
+        {
+            float min = float.PositiveInfinity;
+            float max = float.NegativeInfinity;
+            for (int i = 0; i < values.Length; i++)
+            {
+                float value = values[i];
+                if (value < min) min = value;
+                if (value > max) max = value;
+            }
+
+            float range = max - min;
+            for (int i = 0; i < values.Length; i++)
+            {
+                values[i] = Math.Clamp((values[i] - min) / range, 0f, 1f);
+            }
+            return values;
+        }
+
+
+        /// <summary>
+        /// Min/Max normalizaton to one to one.
+        /// </summary>
+        /// <param name="values">The values.</param>
+        /// <returns>Span&lt;System.Single&gt;.</returns>
+        private static Span<float> NormalizeMinMaxToOneToOne(this Span<float> values)
+        {
+            float min = float.PositiveInfinity;
+            float max = float.NegativeInfinity;
+            for (int i = 0; i < values.Length; i++)
+            {
+                float value = values[i];
+                if (value < min)
+                    min = value;
+                if (value > max)
+                    max = value;
+            }
+
+            float range = max - min;
+            for (int i = 0; i < values.Length; i++)
+            {
+                values[i] = Math.Clamp(2 * (values[i] - min) / range - 1, -1f, 1f);
+            }
+            return values;
+        }
+
+
+        /// <summary>
+        /// Concatenates the specified tensors along the specified axis.
+        /// </summary>
+        /// <param name="tensor1">The tensor1.</param>
+        /// <param name="tensor2">The tensor2.</param>
+        /// <param name="axis">The axis.</param>
+        /// <returns></returns>
+        /// <exception cref="System.NotImplementedException">Only axis 0,1,2 is supported</exception>
+        public static Tensor<T> Concatenate<T>(this Tensor<T> tensor1, Tensor<T> tensor2, int axis = 0)
+        {
+            if (tensor1 == null)
+                return tensor2.Clone();
+
+            return axis switch
+            {
+                0 => ConcatenateAxis0(tensor1, tensor2),
+                1 => ConcatenateAxis1(tensor1, tensor2),
+                2 => ConcatenateAxis2(tensor1, tensor2),
+                _ => throw new NotImplementedException("Only axis 0, 1, 2 is supported")
+            };
+        }
+
+
+        /// <summary>
+        /// Concatenates Axis 0.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="tensor1">The tensor1.</param>
+        /// <param name="tensor2">The tensor2.</param>
+        /// <returns>Tensor&lt;T&gt;.</returns>
+        private static Tensor<T> ConcatenateAxis0<T>(this Tensor<T> tensor1, Tensor<T> tensor2)
+        {
+            var dimensions = tensor1.Dimensions.ToArray();
+            dimensions[0] += tensor2.Dimensions[0];
+
+            var buffer = new Tensor<T>(dimensions);
+            tensor1.Memory.Span.CopyTo(buffer.Memory.Span[..(int)tensor1.Length]);
+            tensor2.Memory.Span.CopyTo(buffer.Memory.Span[(int)tensor1.Length..]);
+            return buffer;
+        }
+
+
+        /// <summary>
+        /// Concatenates Axis 1.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="tensor1">The tensor1.</param>
+        /// <param name="tensor2">The tensor2.</param>
+        /// <returns>Tensor&lt;T&gt;.</returns>
+        /// <exception cref="System.ArgumentException">Length 2, 3 or 4 currently supported</exception>
+        private static Tensor<T> ConcatenateAxis1<T>(Tensor<T> tensor1, Tensor<T> tensor2)
+        {
+            var dimensions = tensor1.Dimensions.ToArray();
+            dimensions[1] += tensor2.Dimensions[1];
+            var concatenatedTensor = new Tensor<T>(dimensions);
+
+            if (tensor1.Dimensions.Length == 2)
+            {
+                for (int i = 0; i < tensor1.Dimensions[0]; i++)
+                    for (int j = 0; j < tensor1.Dimensions[1]; j++)
+                        concatenatedTensor[i, j] = tensor1[i, j];
+
+                for (int i = 0; i < tensor1.Dimensions[0]; i++)
+                    for (int j = 0; j < tensor2.Dimensions[1]; j++)
+                        concatenatedTensor[i, j + tensor1.Dimensions[1]] = tensor2[i, j];
+            }
+            else if (tensor1.Dimensions.Length == 3)
+            {
+                for (int i = 0; i < tensor1.Dimensions[0]; i++)
+                    for (int j = 0; j < tensor1.Dimensions[1]; j++)
+                        for (int k = 0; k < tensor1.Dimensions[2]; k++)
+                            concatenatedTensor[i, j, k] = tensor1[i, j, k];
+
+                for (int i = 0; i < tensor2.Dimensions[0]; i++)
+                    for (int j = 0; j < tensor2.Dimensions[1]; j++)
+                        for (int k = 0; k < tensor2.Dimensions[2]; k++)
+                            concatenatedTensor[i, j + tensor1.Dimensions[1], k] = tensor2[i, j, k];
+            }
+            else if (tensor1.Dimensions.Length == 4)
+            {
+                for (int i = 0; i < tensor1.Dimensions[0]; i++)
+                    for (int j = 0; j < tensor1.Dimensions[1]; j++)
+                        for (int k = 0; k < tensor1.Dimensions[2]; k++)
+                            for (int l = 0; l < tensor1.Dimensions[3]; l++)
+                                concatenatedTensor[i, j, k, l] = tensor1[i, j, k, l];
+
+                for (int i = 0; i < tensor2.Dimensions[0]; i++)
+                    for (int j = 0; j < tensor2.Dimensions[1]; j++)
+                        for (int k = 0; k < tensor2.Dimensions[2]; k++)
+                            for (int l = 0; l < tensor2.Dimensions[3]; l++)
+                                concatenatedTensor[i, j + tensor1.Dimensions[1], k, l] = tensor2[i, j, k, l];
+            }
+            else
+            {
+                throw new ArgumentException("Length 2, 3 or 4 currently supported");
+            }
+            return concatenatedTensor;
+        }
+
+
+        /// <summary>
+        /// Concatenates Axis 2.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="tensor1">The tensor1.</param>
+        /// <param name="tensor2">The tensor2.</param>
+        /// <returns>Tensor&lt;T&gt;.</returns>
+        private static Tensor<T> ConcatenateAxis2<T>(Tensor<T> tensor1, Tensor<T> tensor2)
+        {
+            var dimensions = tensor1.Dimensions.ToArray();
+            dimensions[2] += tensor2.Dimensions[2];
+            var concatenatedTensor = new Tensor<T>(dimensions);
+
+            for (int i = 0; i < dimensions[0]; i++)
+                for (int j = 0; j < dimensions[1]; j++)
+                    for (int k = 0; k < tensor1.Dimensions[2]; k++)
+                        concatenatedTensor[i, j, k] = tensor1[i, j, k];
+
+            for (int i = 0; i < dimensions[0]; i++)
+                for (int j = 0; j < dimensions[1]; j++)
+                    for (int k = 0; k < tensor2.Dimensions[2]; k++)
+                        concatenatedTensor[i, j, k + tensor1.Dimensions[2]] = tensor2[i, j, k];
+
+            return concatenatedTensor;
+        }
+
+
+        /// <summary>
+        /// Computes the softmax function over the specified tensor
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <returns>Tensor&lt;System.Single&gt;.</returns>
+        public static Tensor<float> SoftMax(this Tensor<float> tensor)
+        {
+            TensorPrimitives.SoftMax(tensor.Memory.Span, tensor.Memory.Span);
+            return tensor;
+        }
+
+        /// <summary>
+        /// Lerps the specified valuse.
+        /// </summary>
+        /// <param name="span1">The span1.</param>
+        /// <param name="span2">The span2.</param>
+        /// <param name="value">The value.</param>
+        public static void Lerp(this Memory<float> span1, Memory<float> span2, float value)
+        {
+            TensorPrimitives.Lerp(span1.Span, span2.Span, value, span1.Span);
+        }
+
+
+        /// <summary>
+        /// Inverts the specified tensor.
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        public static Tensor<float> Invert(this Tensor<float> tensor)
+        {
+            for (int j = 0; j < tensor.Length; j++)
+                tensor.SetValue(j, -tensor.GetValue(j));
+            return tensor;
+        }
+
+
+        /// <summary>
+        /// Return tensor with guidance dimension if required
+        /// </summary>
+        /// <param name="tensor">The tensor.</param>
+        /// <param name="applyGuidance">if set to <c>true</c> [apply guidance].</param>
+        public static Tensor<float> WithGuidance(this Tensor<float> tensor, bool applyGuidance)
+        {
+            if (!applyGuidance)
+                return tensor;
+
+            return tensor.Repeat(2);
+        }
+
+
+        /// <summary>
+        /// Resizes the Tensor.
+        /// </summary>
+        /// <param name="sourceImage">The source image.</param>
+        /// <param name="targetWidth">Width of the target.</param>
+        /// <param name="targetHeight">Height of the target.</param>
+        /// <param name="resizeMode">The resize mode.</param>
+        /// <param name="resizeMethod">The resize method.</param>
+        /// <returns>Tensor&lt;System.Single&gt;.</returns>
+        public static Tensor<float> ResizeTensor(this Tensor<float> sourceImage, int targetWidth, int targetHeight, ResizeMode resizeMode = ResizeMode.Stretch, ResizeMethod resizeMethod = ResizeMethod.Bilinear)
+        {
+            return resizeMethod switch
+            {
+                ResizeMethod.Bicubic => ResizeBicubic(sourceImage, targetWidth, targetHeight, resizeMode),
+                _ => ResizeBilinear(sourceImage, targetWidth, targetHeight, resizeMode),
+            };
+        }
+
+
+        /// <summary>
+        /// Resizes the ImageTensor.
+        /// </summary>
+        /// <param name="sourceImage">The source image.</param>
+        /// <param name="targetWidth">Width of the target.</param>
+        /// <param name="targetHeight">Height of the target.</param>
+        /// <param name="resizeMode">The resize mode.</param>
+        /// <param name="resizeMethod">The resize method.</param>
+        /// <returns>ImageTensor.</returns>
+        public static ImageTensor ResizeImage(this ImageTensor sourceImage, int targetWidth, int targetHeight, ResizeMode resizeMode = ResizeMode.Stretch, ResizeMethod resizeMethod = ResizeMethod.Bilinear)
+        {
+            return sourceImage.ResizeTensor(targetWidth, targetHeight, resizeMode, resizeMethod).AsImageTensor();
+        }
+
+
+        /// <summary>
+        /// Overlays the image onto the source.
+        /// </summary>
+        /// <param name="sourceImage">The source image.</param>
+        /// <param name="overlayImage">The overlay image.</param>
+        public static void OverlayImage(this ImageTensor sourceImage, ImageTensor overlayImage)
+        {
+            var width = sourceImage.Width;
+            var height = sourceImage.Height;
+            var sourceSpan = sourceImage.Memory.Span;
+            var overlaySpan = overlayImage.Span;
+            int stride = width * height;
+            var sR = sourceSpan.Slice(0, stride);
+            var sG = sourceSpan.Slice(stride, stride);
+            var sB = sourceSpan.Slice(2 * stride, stride);
+            var oR = overlaySpan.Slice(0, stride);
+            var oG = overlaySpan.Slice(stride, stride);
+            var oB = overlaySpan.Slice(2 * stride, stride);
+            var oA = overlaySpan.Slice(3 * stride, stride);
+            float[] poolArray = ArrayPool<float>.Shared.Rent(stride * 3);
+            try
+            {
+                var normAlpha = poolArray.AsSpan(0, stride);
+                var invAlpha = poolArray.AsSpan(stride, stride);
+                var tempBuffer = poolArray.AsSpan(2 * stride, stride);
+
+                // Normalize Alpha
+                TensorPrimitives.Add(oA, 1.0f, normAlpha);
+                TensorPrimitives.Multiply(normAlpha, 0.5f, normAlpha);
+                TensorPrimitives.Subtract(1.0f, normAlpha, invAlpha);
+
+                // Blend Channels
+                BlendPlane(sR, oR, normAlpha, invAlpha, tempBuffer);
+                BlendPlane(sG, oG, normAlpha, invAlpha, tempBuffer);
+                BlendPlane(sB, oB, normAlpha, invAlpha, tempBuffer);
+            }
+            finally
+            {
+                ArrayPool<float>.Shared.Return(poolArray);
+            }
+        }
+
+
+        private static void BlendPlane(Span<float> source, ReadOnlySpan<float> overlay, ReadOnlySpan<float> alpha, ReadOnlySpan<float> invAlpha, Span<float> scratch)
+        {
+            TensorPrimitives.Multiply(source, invAlpha, scratch);
+            TensorPrimitives.MultiplyAdd(overlay, alpha, scratch, source);
+        }
+
+
+        /// <summary>
+        /// Gets the crop coordinates.
+        /// </summary>
+        /// <param name="sourceHeight">Height of the source.</param>
+        /// <param name="sourceWidth">Width of the source.</param>
+        /// <param name="targetHeight">Height of the target.</param>
+        /// <param name="targetWidth">Width of the target.</param>
+        /// <param name="resizeMode">The resize mode.</param>
+        /// <returns>CoordinateBox&lt;System.Int32&gt;.</returns>
+        private static CoordinateBox<int> GetCropCoordinates(int sourceHeight, int sourceWidth, int targetHeight, int targetWidth, ResizeMode resizeMode)
+        {
+            var cropX = 0;
+            var cropY = 0;
+            var croppedWidth = targetWidth;
+            var croppedHeight = targetHeight;
+            if (resizeMode == ResizeMode.Crop)
+            {
+                var scaleX = (float)targetWidth / sourceWidth;
+                var scaleY = (float)targetHeight / sourceHeight;
+                var scaleFactor = Math.Max(scaleX, scaleY);
+                croppedWidth = (int)(sourceWidth * scaleFactor);
+                croppedHeight = (int)(sourceHeight * scaleFactor);
+                cropX = Math.Abs(Math.Max((croppedWidth - targetWidth) / 2, 0));
+                cropY = Math.Abs(Math.Max((croppedHeight - targetHeight) / 2, 0));
+            }
+            else if (resizeMode == ResizeMode.LetterBox)
+            {
+                var scaleX = (float)targetWidth / sourceWidth;
+                var scaleY = (float)targetHeight / sourceHeight;
+                var scaleFactor = Math.Min(scaleX, scaleY);
+                croppedWidth = (int)(sourceWidth * scaleFactor);
+                croppedHeight = (int)(sourceHeight * scaleFactor);
+                cropX = -(targetWidth - croppedWidth) / 2;
+                cropY = -(targetHeight - croppedHeight) / 2;
+            }
+            return new CoordinateBox<int>(cropX, cropY, croppedWidth, croppedHeight);
+        }
+
+
+        /// <summary>
+        /// Resizes the specified Tensor (Bilinear)
+        /// </summary>
+        /// <param name="sourceImage">The input.</param>
+        /// <param name="targetWidth">Width of the target.</param>
+        /// <param name="targetHeight">Height of the target.</param>
+        /// <returns>ImageTensor.</returns>
+        private static Tensor<float> ResizeBilinear(Tensor<float> sourceImage, int targetWidth, int targetHeight, ResizeMode resizeMode)
+        {
+            var channels = sourceImage.Dimensions[1];
+            var sourceHeight = sourceImage.Dimensions[2];
+            var sourceWidth = sourceImage.Dimensions[3];
+            var cropSize = GetCropCoordinates(sourceHeight, sourceWidth, targetHeight, targetWidth, resizeMode);
+            var destination = new Tensor<float>([1, channels, targetHeight, targetWidth]);
+            if (resizeMode == ResizeMode.LetterBox)
+                destination.Fill(0f);
+
+            var scaleY = (float)(sourceHeight - 1) / (cropSize.MaxY - 1);
+            var sclaeX = (float)(sourceWidth - 1) / (cropSize.MaxX - 1);
+            Parallel.For(0, cropSize.MaxY, h =>
+            {
+                for (var c = 0; c < channels; c++)
+                {
+                    for (int w = 0; w < cropSize.MaxX; w++)
+                    {
+                        var y = h * scaleY;
+                        var x = w * sclaeX;
+
+                        var y0 = (int)Math.Floor(y);
+                        var x0 = (int)Math.Floor(x);
+                        var y1 = Math.Min(y0 + 1, sourceHeight - 1);
+                        var x1 = Math.Min(x0 + 1, sourceWidth - 1);
+
+                        var dy = y - y0;
+                        var dx = x - x0;
+                        var topLeft = sourceImage[0, c, y0, x0];
+                        var topRight = sourceImage[0, c, y0, x1];
+                        var bottomLeft = sourceImage[0, c, y1, x0];
+                        var bottomRight = sourceImage[0, c, y1, x1];
+
+                        var targetY = h - cropSize.MinY;
+                        var targetX = w - cropSize.MinX;
+                        if (targetX >= 0 && targetY >= 0 && targetY < targetHeight && targetX < targetWidth)
+                        {
+                            destination[0, c, targetY, targetX] =
+                                    topLeft * (1 - dx) * (1 - dy) +
+                                    topRight * dx * (1 - dy) +
+                                    bottomLeft * (1 - dx) * dy +
+                                    bottomRight * dx * dy;
+                        }
+                    }
+                }
+            });
+            return destination;
+        }
+
+
+        /// <summary>
+        /// Resizes the specified Tensor (Bicubic)
+        /// </summary>
+        /// <param name="sourceImage">The input.</param>
+        /// <param name="targetWidth">Width of the target.</param>
+        /// <param name="targetHeight">Height of the target.</param>
+        private static Tensor<float> ResizeBicubic(Tensor<float> sourceImage, int targetWidth, int targetHeight, ResizeMode resizeMode = ResizeMode.Stretch)
+        {
+            var channels = sourceImage.Dimensions[1];
+            var sourceHeight = sourceImage.Dimensions[2];
+            var sourceWidth = sourceImage.Dimensions[3];
+            var cropSize = GetCropCoordinates(sourceHeight, sourceWidth, targetHeight, targetWidth, resizeMode);
+            var destination = new Tensor<float>([1, channels, targetHeight, targetWidth]);
+            if (resizeMode == ResizeMode.LetterBox)
+                destination.Fill(0f);
+
+            var scaleX = (float)sourceWidth / cropSize.MaxX;
+            var scaleY = (float)sourceHeight / cropSize.MaxY;
+            Parallel.For(0, cropSize.MaxY, h =>
+            {
+                for (var c = 0; c < channels; c++)
+                {
+                    for (int w = 0; w < cropSize.MaxX; w++)
+                    {
+                        float srcY = (h + 0.5f) * scaleY - 0.5f;
+                        float srcX = (w + 0.5f) * scaleX - 0.5f;
+
+                        int yInt = (int)Math.Floor(srcY);
+                        int xInt = (int)Math.Floor(srcX);
+                        float yFrac = srcY - yInt;
+                        float xFrac = srcX - xInt;
+                        float pixelValue = 0f;
+
+                        // 2D bicubic: sum over 16 neighbors
+                        for (int m = -1; m <= 2; m++)
+                        {
+                            int yi = MirrorIndex(yInt + m, sourceHeight);
+                            float wY = MitchellNetravali(m - yFrac);
+
+                            for (int n = -1; n <= 2; n++)
+                            {
+                                int xi = MirrorIndex(xInt + n, sourceWidth);
+                                float wX = MitchellNetravali(n - xFrac);
+                                pixelValue += sourceImage[0, c, yi, xi] * wX * wY;
+                            }
+                        }
+
+                        int targetY = h - cropSize.MinY;
+                        int targetX = w - cropSize.MinX;
+                        if (targetX >= 0 && targetY >= 0 && targetY < targetHeight && targetX < targetWidth)
+                        {
+                            destination[0, c, targetY, targetX] = pixelValue;
+                        }
+                    }
+                }
+            });
+
+            return destination;
+        }
+
+
+        /// <summary>
+        /// Mitchell-Netravali kernel (sharper, natural bicubic)
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>System.Single.</returns>
+        private static float MitchellNetravali(float value)
+        {
+            value = Math.Abs(value);
+            const float B = 1f / 3f;
+            const float C = 1f / 3f;
+
+            if (value < 1f)
+                return ((12 - 9 * B - 6 * C) * (value * value * value) + (-18 + 12 * B + 6 * C) * (value * value) + (6 - 2 * B)) / 6f;
+            else if (value < 2f)
+                return ((-B - 6 * C) * (value * value * value) + (6 * B + 30 * C) * (value * value) + (-12 * B - 48 * C) * value + (8 * B + 24 * C)) / 6f;
+            else
+                return 0f;
+        }
+
+
+        /// <summary>
+        /// Mirror padding helper
+        /// </summary>
+        /// <param name="i">The i.</param>
+        /// <param name="max">The maximum.</param>
+        /// <returns>System.Int32.</returns>
+        private static int MirrorIndex(int i, int max)
+        {
+            if (i < 0)
+                return -i;
+            if (i >= max)
+                return 2 * max - i - 2;
+            return i;
+        }
+    }
+}

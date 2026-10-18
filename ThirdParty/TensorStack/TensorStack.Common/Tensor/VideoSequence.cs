@@ -1,0 +1,43 @@
+﻿using System;
+
+namespace TensorStack.Common.Tensor
+{
+    public class VideoSequence
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VideoSequence"/> class.
+        /// </summary>
+        /// <param name="frames">The frames.</param>
+        /// <param name="frameRate">The frame rate.</param>
+        public VideoSequence(ImageTensor[] frames, float frameRate)
+        {
+            Frames = frames;
+            FrameRate = frameRate;
+            Width = Frames[0].Width;
+            Height = Frames[0].Height;
+            Duration = TimeSpan.FromSeconds(frames.Length / frameRate);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VideoSequence"/> class.
+        /// </summary>
+        /// <param name="frames">The frames.</param>
+        /// <param name="frameRate">The frame rate.</param>
+        /// <param name="audio">The audio.</param>
+        public VideoSequence(ImageTensor[] frames, float frameRate, AudioTensor audio)
+            : this(frames, frameRate)
+        {
+            Audio = audio;
+        }
+
+        public int Width { get; }
+        public int Height { get; }
+        public float FrameRate { get; }
+        public TimeSpan Duration { get; }
+        public AudioTensor Audio { get; }
+        public ImageTensor[] Frames { get; }
+        public int FrameCount => Frames?.Length ?? 0;
+        public bool HasAudio => Audio != null;
+        public int SampleRate => Audio?.SampleRate ?? 0;
+    }
+}

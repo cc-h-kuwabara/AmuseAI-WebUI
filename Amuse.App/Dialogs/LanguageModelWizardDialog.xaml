@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Amuse.App.Dialogs"
         xmlns:CommonControls="clr-namespace:TensorStack.WPF.Controls;assembly=TensorStack.WPF"
-        xmlns:Common="clr-namespace:Amuse.App.Common"
+        xmlns:Common="clr-namespace:Amuse.App.Common;assembly=Amuse.Core"
         xmlns:Controls="clr-namespace:Amuse.App.Controls"
         Title="{CommonControls:Localize Title_AddModel}"
         MinWidth="800"

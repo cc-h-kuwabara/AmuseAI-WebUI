@@ -125,9 +125,9 @@ namespace Amuse.App.Tools
         {
             if (!settings.IsExternalToolsAcknowledged)
             {
-                var dialogResult = await DialogService.ShowMessageAsync("External Access", $"{DisplayName} will access external data or services.\nData from this request may be sent to retrieve or process the requested information.\n\nDo you want to continue?", TensorStack.WPF.Dialogs.MessageDialogType.YesNo, TensorStack.WPF.Dialogs.MessageBoxIconType.Warning, TensorStack.WPF.Dialogs.MessageBoxStyleType.Warning, true);
-                settings.IsExternalToolsEnabled = dialogResult;
-                settings.IsExternalToolsAcknowledged = dialogResult.DontAskAgain;
+                var result = await AppRuntime.ConfirmExternalAccess(DisplayName);
+                settings.IsExternalToolsEnabled = result.Allowed;
+                settings.IsExternalToolsAcknowledged = result.Remember;
                 await settings.SaveAsync();
             }
 

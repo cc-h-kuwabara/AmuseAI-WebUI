@@ -101,6 +101,19 @@ The resulting binaries will be available in the project's configured build outpu
 
 Run `Amuse.exe` to start Amuse.
 
+### Local Web app
+
+Amuse also includes a local Web server with a browser UI. The Windows desktop app is retained.
+
+```powershell
+dotnet build Amuse.sln -c Release
+& .\Amuse.Web\bin\Release\net10.0-windows10.0.17763.0\Amuse.Web.exe --port 8080 --host-dir .\Amuse.App\bin\Release\net10.0-windows10.0.17763.0
+```
+
+Open `http://localhost:8080`. The server binds only to loopback. Stop it with `Ctrl+C`.
+For Linux x64, run `bash Scripts/publish-web-linux.sh`; CPU and NVIDIA CUDA setup instructions are in the Web README.
+See [Amuse.Web/README.md](Amuse.Web/README.md) for desktop data import, publishing, supported workflows, and validation limits.
+
 
 ---
 

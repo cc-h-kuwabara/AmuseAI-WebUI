@@ -34,7 +34,10 @@ namespace Amuse.App.Services
             _logger = logger;
             _settings = settings;
             _asyncLock = new SemaphoreSlim(1, 1);
-            _previewModelDirectory = Path.Combine(App.DirectoryData, "Plugins", "Preview");
+            var userPreviewDirectory = Path.Combine(AppRuntime.DirectoryData, "Plugins", "Preview");
+            _previewModelDirectory = Directory.Exists(userPreviewDirectory)
+                ? userPreviewDirectory
+                : Path.Combine(AppRuntime.DirectoryBase, "Plugins", "Preview");
         }
 
 

@@ -19,6 +19,7 @@ namespace Amuse.Common.Config
             return _configurations[serverType] with
             {
                 DirectoryBase = directoryBase,
+                Executable = System.OperatingSystem.IsWindows() ? _configurations[serverType].Executable : System.IO.Path.GetFileNameWithoutExtension(_configurations[serverType].Executable),
             };
         }
 

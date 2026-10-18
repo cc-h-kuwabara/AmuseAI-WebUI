@@ -34,7 +34,7 @@ namespace Amuse.App.Runtime
             var createOptions = new PipelineCreateOptions();
             var clientConfig = new ClientConfig
             {
-                ServerPath = App.DirectoryServer,
+                ServerPath = AppRuntime.DirectoryServer,
                 ServerType = ServerType.OnnxRuntime,
                 IsDebugMode = Settings.IsServerDebugEnabled,
             };

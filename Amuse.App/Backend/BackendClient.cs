@@ -59,14 +59,16 @@ namespace Amuse.App.Runtime
         {
             try
             {
-                using (CancellationTokenSource = new CancellationTokenSource())
+                using (var cancellation = new CancellationTokenSource())
                 {
+                    CancellationTokenSource = cancellation;
                     await UnloadPipelineClientAsync();
 
                     Pipeline = pipeline;
                     ProgressCallback = progressCallback;
                     DefaultOptions = Pipeline.GenerateModel.DefaultOptions;
-                    PipelineClient = await CreatePipelineClientAsync(CancellationTokenSource.Token);
+                    PipelineClient = await CreatePipelineClientAsync(cancellation.Token);
+                    cancellation.Token.ThrowIfCancellationRequested();
                     Pipeline.GenerateModel.Status = ModelStatusType.Installed;
                     Settings.ScanModels();
                 }
@@ -141,16 +143,15 @@ namespace Amuse.App.Runtime
         /// </summary>
         public async Task CancelAsync()
         {
+            // Cancel a load before waiting for a command response. During creation
+            // the host may not yet be ready to process commands.
+            await CancellationTokenSource.SafeCancelAsync();
             try
             {
                 if (PipelineClient is not null)
                     await PipelineClient.CancelAsync();
             }
             catch (Exception) { }
-            finally
-            {
-                await CancellationTokenSource.SafeCancelAsync();
-            }
         }
 
 
@@ -159,14 +160,19 @@ namespace Amuse.App.Runtime
         /// </summary>
         public async Task StopAsync()
         {
+            var client = PipelineClient;
             try
             {
-                await PipelineClient.KillServerAsync();
+                await CancellationTokenSource.SafeCancelAsync();
+                if (client is not null)
+                    await client.KillServerAsync();
             }
             catch (Exception) { }
             finally
             {
-                PipelineClient = null;
+                client?.Dispose();
+                if (ReferenceEquals(PipelineClient, client))
+                    PipelineClient = null;
             }
         }
 
@@ -356,6 +362,7 @@ namespace Amuse.App.Runtime
         /// </summary>
         public void Dispose()
         {
+            CancellationTokenSource.SafeCancel();
             PipelineClient?.Dispose();
             PipelineClient = null;
             CancellationTokenSource = null;
@@ -374,12 +381,17 @@ namespace Amuse.App.Runtime
         {
             var progressCallback = new Progress<PipelineProgress>(progress => ProgressCallback?.Report(progress));
             var pipelineClient = new PipelineClient(config, progressCallback, Logger);
+            // Keep ownership throughout creation/loading so StopAsync can kill
+            // the host even before CreatePipelineClientAsync returns.
+            PipelineClient = pipelineClient;
 
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var loadOptions = GetPipelineLoadOptions();
                 await pipelineClient.CreateAsync(createOptions, cancellationToken);
                 await pipelineClient.LoadAsync(loadOptions, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
                 return pipelineClient;
             }
             catch (Exception)

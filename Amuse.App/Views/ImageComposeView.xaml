@@ -9,7 +9,7 @@
     xmlns:CommonControls="clr-namespace:TensorStack.WPF.Controls;assembly=TensorStack.WPF"
     xmlns:Views="clr-namespace:Amuse.App.Views"
     xmlns:Controls="clr-namespace:Amuse.App.Controls"
-    xmlns:Base="clr-namespace:Amuse.App">
+    xmlns:Base="clr-namespace:Amuse.App;assembly=Amuse.Core">
     <Grid DataContext="{Binding RelativeSource={RelativeSource AncestorType={x:Type local:ImageComposeView}}}">
         <Grid.RowDefinitions>
             <RowDefinition Height="1*" />

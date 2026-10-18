@@ -8,8 +8,10 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+#if !AMUSE_PORTABLE
 using System.Windows;
 using System.Windows.Media;
+#endif
 using System.Xml.Linq;
 using TensorStack.Common;
 using TensorStack.Common.Tensor;
@@ -174,6 +176,7 @@ namespace Amuse.App
         }
 
 
+#if !AMUSE_PORTABLE
         public static IEnumerable<T> FindVisualChildren<T>(this DependencyObject parent) where T : DependencyObject
         {
             if (parent == null)
@@ -191,8 +194,9 @@ namespace Amuse.App
             }
         }
 
-    }
 
+#endif
+    }
     public static partial class Utils
     {
         public const int FixedIdRange = 1000;
@@ -393,6 +397,7 @@ namespace Amuse.App
 
 
 
+#if !AMUSE_PORTABLE
     public static class FontOptions
     {
         public static FontWeight[] FontWeightList { get; } = new[]
@@ -430,6 +435,7 @@ namespace Amuse.App
     }
 
 
+#endif
     public static partial class RegexManager
     {
         [GeneratedRegex(@"^```", RegexOptions.Multiline)]

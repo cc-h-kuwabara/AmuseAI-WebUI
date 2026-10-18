@@ -71,12 +71,12 @@ namespace Amuse.App.Services
         private bool RunRuntimeMigrations(bool isReadOnly)
         {
             // v3.8.0 - Rename Runtime Folders
-            var source1 = Path.Combine(App.DirectoryData, "PythonRuntime");
-            var source2 = Path.Combine(App.DirectoryData, "StableDiffusionCppRuntime");
-            var source3 = Path.Combine(App.DirectoryData, "Python");
-            var source4 = Path.Combine(App.DirectoryData, "Pipelines");
-            var destination1 = Path.Combine(App.DirectoryData, "RuntimeHuggingFace");
-            var destination2 = Path.Combine(App.DirectoryData, "RuntimeStableDiffusionCpp");
+            var source1 = Path.Combine(AppRuntime.DirectoryData, "PythonRuntime");
+            var source2 = Path.Combine(AppRuntime.DirectoryData, "StableDiffusionCppRuntime");
+            var source3 = Path.Combine(AppRuntime.DirectoryData, "Python");
+            var source4 = Path.Combine(AppRuntime.DirectoryData, "Pipelines");
+            var destination1 = Path.Combine(AppRuntime.DirectoryData, "RuntimeHuggingFace");
+            var destination2 = Path.Combine(AppRuntime.DirectoryData, "RuntimeStableDiffusionCpp");
 
             if (Directory.Exists(source1) || Directory.Exists(source2) || Directory.Exists(source3) || Directory.Exists(source4))
             {

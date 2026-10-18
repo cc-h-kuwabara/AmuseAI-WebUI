@@ -113,7 +113,7 @@ namespace Amuse.Host.StableDiffusionCpp
         private static string GetLogName()
         {
             var now = DateTime.Now;
-            return Path.Combine(_directoryData, @$"Logs\{_serverConfig.Name}-{DateTime.Now:dd-MM-yyyy}-{now.Hour * 3600 + now.Minute * 60 + now.Second}.txt");
+            return Path.Combine(_directoryData, "Logs", $"{_serverConfig.Name}-{DateTime.Now:dd-MM-yyyy}-{now.Hour * 3600 + now.Minute * 60 + now.Second}.txt");
         }
     }
 }

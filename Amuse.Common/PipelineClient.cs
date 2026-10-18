@@ -28,6 +28,7 @@ namespace Amuse.Common
         private CancellationTokenSource _progressCancellation;
         private Process _serverProcess;
         private bool _isCanceled;
+        private int _disposed;
 
         protected PipelineClient(ClientConfig config, ServerConfig serverConfig, IProgress<PipelineProgress> progressCallback, ILogger logger = default)
         {
@@ -54,6 +55,7 @@ namespace Amuse.Common
         /// <param name="cancellationToken">The cancellation token.</param>
         protected async Task StartAsync(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             _isCanceled = false;
 
             // Start Server
@@ -62,17 +64,33 @@ namespace Amuse.Common
             try
             {
                 // Connect Pipes
-                await Task.WhenAll
+                using var connectionTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                connectionTimeout.CancelAfter(TimeSpan.FromMinutes(2));
+                var connected = Task.WhenAll
                 (
-                    _commandChannel.ConnectAsync(cancellationToken),
-                    _progressChannel.ConnectAsync(cancellationToken),
-                    _pipelineChannel.ConnectAsync(cancellationToken)
+                    _commandChannel.ConnectAsync(connectionTimeout.Token),
+                    _progressChannel.ConnectAsync(connectionTimeout.Token),
+                    _pipelineChannel.ConnectAsync(connectionTimeout.Token)
                 );
+                var exited = _serverProcess.WaitForExitAsync(connectionTimeout.Token);
+                if (await Task.WhenAny(connected, exited) == exited && _serverProcess.HasExited)
+                {
+                    connectionTimeout.Cancel();
+                    try { await connected; } catch (OperationCanceledException) { }
+                    throw new IOException($"AI host exited before connecting (exit code {_serverProcess.ExitCode}). Check host dependencies and logs.");
+                }
+                await connected;
+                connectionTimeout.Cancel();
 
                 // Start Environment
                 await SendPipelineRequestAsync(new PipelineRequest(RequestType.Start), cancellationToken);
             }
             catch (OperationCanceledException)
+            {
+                await KillServerAsync();
+                throw;
+            }
+            catch
             {
                 await KillServerAsync();
                 throw;
@@ -96,7 +114,7 @@ namespace Amuse.Common
         /// </summary>
         public virtual async Task KillServerAsync()
         {
-            if (_serverProcess is not null)
+            if (_serverProcess is not null && !_serverProcess.HasExited)
             {
                 _serverProcess.Kill(true);
                 await _serverProcess.WaitForExitAsync();
@@ -249,12 +267,22 @@ namespace Amuse.Common
         /// </summary>
         public virtual void Dispose()
         {
-            _progressCancellation?.SafeCancel();
-            _progressCancellation?.Dispose();
-            _progressChannel?.Dispose();
-            _commandChannel?.Dispose();
-            _pipelineChannel?.Dispose();
-            _serverProcess?.Dispose();
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+                return;
+            try
+            {
+                _progressCancellation?.SafeCancel();
+                _progressCancellation?.Dispose();
+                _progressChannel?.Dispose();
+                _commandChannel?.Dispose();
+                _pipelineChannel?.Dispose();
+                _serverProcess?.Dispose();
+            }
+            finally
+            {
+                _processHandler?.Dispose();
+                _pipelineTensorChannel?.Cleanup();
+            }
         }
 
 

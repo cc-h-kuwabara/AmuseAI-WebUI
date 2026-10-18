@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <AssemblyName>Amuse.Web</AssemblyName>
+    <UseWPF Condition="'$(AmusePortable)' != 'true'">true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <Content Update="wwwroot\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <ProjectReference Include="..\Amuse.Core\Amuse.Core.csproj" />
+    <Content Include="..\Amuse.App\Settings.default.json;..\Amuse.App\Templates.json" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\Amuse.App\Plugins\**\*" Link="Plugins\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Condition="'$(AmusePortable)' != 'true'" Include="..\Amuse.App\OnnxStack.Adapter.dll" Link="OnnxStack.Adapter.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

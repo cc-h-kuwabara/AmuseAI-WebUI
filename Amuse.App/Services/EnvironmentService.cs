@@ -122,6 +122,13 @@ namespace Amuse.App.Services
         public PipelineCreateOptions CreatePipelineOptions(EnvironmentModel environment, BackendStatus status = BackendStatus.Create)
         {
             var backendPath = GetBackendPath(environment);
+            if (OperatingSystem.IsLinux() && environment.Backend == BackendType.StableDiffusionCpp && environment.HostVersion == "CUDA")
+            {
+                if (status != BackendStatus.Create && status != BackendStatus.Load)
+                    throw new InvalidOperationException("Update the Linux CUDA runtime with Scripts/install-sd-cuda-linux.sh; automatic rebuild is disabled for this locally built environment.");
+                if (!File.Exists(Path.Combine(backendPath, environment.Environment, "libstable-diffusion.so")))
+                    throw new InvalidOperationException("Build the Linux NVIDIA CUDA runtime first: bash Scripts/install-sd-cuda-linux.sh <Web data directory>. See Amuse.Web/README.md.");
+            }
             if (environment.Backend == BackendType.HuggingFace)
             {
                 var environmentConfig = new PipelineCreateOptions
@@ -167,7 +174,7 @@ namespace Amuse.App.Services
                 var clientConfig = new ClientConfig
                 {
                     IsDebugMode = createOptions.IsDebug,
-                    ServerPath = App.DirectoryServer,
+                    ServerPath = AppRuntime.DirectoryServer,
                     ServerType = ServerType.HuggingFace,
                     ServerVariables = createOptions.Variables
                 };
@@ -183,7 +190,7 @@ namespace Amuse.App.Services
                 var clientConfig = new ClientConfig
                 {
                     IsDebugMode = createOptions.IsDebug,
-                    ServerPath = App.DirectoryServer,
+                    ServerPath = AppRuntime.DirectoryServer,
                     ServerType = ServerType.StableDiffusionCpp,
                     ServerVariables = createOptions.Variables
                 };
@@ -213,8 +220,8 @@ namespace Amuse.App.Services
         private static string GetBackendPath(EnvironmentModel environment)
         {
             return environment.Backend == BackendType.HuggingFace
-                ? Path.Combine(App.DirectoryData, "RuntimeHuggingFace")
-                : Path.Combine(App.DirectoryData, "RuntimeStableDiffusionCpp");
+                ? Path.Combine(AppRuntime.DirectoryData, "RuntimeHuggingFace")
+                : Path.Combine(AppRuntime.DirectoryData, "RuntimeStableDiffusionCpp");
         }
 
 

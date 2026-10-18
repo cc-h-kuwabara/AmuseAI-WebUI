@@ -1,5 +1,4 @@
 ﻿using Amuse.App.Common;
-using Amuse.App.Dialogs;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -88,8 +87,7 @@ namespace Amuse.App.Services
             if (!string.IsNullOrEmpty(accessToken?.Token))
                 return true;
 
-            var dialog = DialogService.GetDialog<GatedModelDialog>();
-            await dialog.ShowDialogAsync(model);
+            await AppRuntime.RequestAccessToken(model);
             return false;
         }
 
@@ -298,7 +296,7 @@ namespace Amuse.App.Services
 
         private void RemoveQueueItem(DownloadQueueItem queueItem)
         {
-            App.Current.Dispatcher.Invoke(() => _downloadItems.Remove(queueItem));
+            AppRuntime.Dispatch(() => _downloadItems.Remove(queueItem));
         }
 
 

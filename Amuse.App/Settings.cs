@@ -7,7 +7,9 @@ using System.IO;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+#if !AMUSE_PORTABLE
 using System.Windows.Controls;
+#endif
 using TensorStack.Common;
 using TensorStack.Common.Common;
 using TensorStack.WPF;
@@ -206,7 +208,7 @@ namespace Amuse.App
         public void InitializeDevices(IReadOnlyList<DeviceModel> devices)
         {
             Devices = devices
-                .Where(x => x.Type == DeviceType.GPU)
+                .Where(x => x.Type == DeviceType.GPU || (!OperatingSystem.IsWindows() && x.Type == DeviceType.CPU))
                 .ToList();
         }
 

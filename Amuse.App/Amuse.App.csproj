@@ -14,7 +14,11 @@
 
   <!--Projects-->
   <ItemGroup>
+    <ProjectReference Include="..\Amuse.Core\Amuse.Core.csproj" />
     <ProjectReference Include="..\Amuse.Common\Amuse.Common.csproj" />
+    <Compile Remove="Common\*.cs;Backend\*.cs;Tools\*.cs;Services\*.cs;Resources\*.Designer.cs;Settings.cs;SettingsManager.cs;Json.cs;Extensions.cs;HuggingFace.cs;Views\View.cs" />
+    <Compile Include="Services\MarkdownConverter.cs" />
+    <EmbeddedResource Remove="Resources\*.resx" />
   </ItemGroup>
 
   <!--Common-->

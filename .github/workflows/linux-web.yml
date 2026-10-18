@@ -1,0 +1,23 @@
+name: Linux Web
+on:
+  push:
+  pull_request:
+jobs:
+  linux-web:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install media dependencies
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg libgomp1 libglib2.0-0 libgl1
+      - name: Publish Web and AI hosts
+        run: bash Scripts/publish-web-linux.sh
+      - name: Install pinned native test runtime
+        run: |
+          curl -fL --retry 3 -o /tmp/amuse-native.zip https://github.com/leejet/stable-diffusion.cpp/releases/download/master-968-8cd731e/sd-master-8cd731e-bin-Linux-Ubuntu-24.04-x86_64.zip
+          mkdir /tmp/amuse-native
+          unzip -q /tmp/amuse-native.zip -d /tmp/amuse-native
+      - name: Integration, media, ONNX and native IPC checks
+        run: bash Scripts/test-linux.sh artifacts/publish/Amuse.Web-linux-x64 /tmp/amuse-native

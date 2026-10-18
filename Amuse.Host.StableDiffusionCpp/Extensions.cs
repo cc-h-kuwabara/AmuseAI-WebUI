@@ -336,6 +336,7 @@ namespace Amuse.Host.StableDiffusionCpp
         /// <param name="backendType">Type of the backend.</param>
         private static string GetBackend(PipelineLoadOptions pipelineOptions, Pipeline.SDBackendType backendType)
         {
+            if (backendType == Pipeline.SDBackendType.CPU) return "cpu";
             var deviceId = backendType == Pipeline.SDBackendType.Vulkan
                 ? pipelineOptions.DeviceId
                 : pipelineOptions.DeviceVendorIndex;

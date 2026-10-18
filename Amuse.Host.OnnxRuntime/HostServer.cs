@@ -79,7 +79,7 @@ namespace Amuse.Host.OnnxRuntime
             try
             {
                 _pipelineOptions = request.LoadOptions;
-                _executionProvider = Provider.GetProvider(DeviceType.GPU, _pipelineOptions.DeviceId, GraphOptimizationLevel.ORT_ENABLE_ALL);
+                _executionProvider = Provider.GetProvider(OperatingSystem.IsWindows() ? DeviceType.GPU : DeviceType.CPU, _pipelineOptions.DeviceId, GraphOptimizationLevel.ORT_ENABLE_ALL);
                 _executionProviderCPU = Provider.GetProvider(DeviceType.CPU, GraphOptimizationLevel.ORT_ENABLE_ALL); // TODO: DirectML not working with decoder
 
                 Enum.TryParse<WhisperType>(_pipelineOptions.ModelType, true, out var WhisperType);

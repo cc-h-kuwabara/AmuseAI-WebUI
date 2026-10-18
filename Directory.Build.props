@@ -1,6 +1,8 @@
 <Project>
   <PropertyGroup>
+    <AmusePortable Condition="'$(AmusePortable)' == '' and '$(OS)' != 'Windows_NT'">true</AmusePortable>
     <Version>3.8.4</Version>
+    <DefaultItemExcludes>$(DefaultItemExcludes);**/obj/**;**/bin/**</DefaultItemExcludes>
     <PackageVersion>0.14.1</PackageVersion>
     <Copyright>sa_ddam213 - 2026</Copyright>
     <RepositoryUrl>https://github.com/saddam213/AmuseAI</RepositoryUrl>
@@ -11,5 +13,9 @@
     <PlatformTarget>x64</PlatformTarget>
     <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
     <TargetFrameworks>net10.0-windows10.0.17763.0</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(AmusePortable)' == 'true'">
+    <TargetFramework>net10.0</TargetFramework><TargetFrameworks></TargetFrameworks>
+    <DefineConstants>$(DefineConstants);AMUSE_PORTABLE</DefineConstants>
   </PropertyGroup>
 </Project>

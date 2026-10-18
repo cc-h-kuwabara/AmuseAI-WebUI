@@ -7,9 +7,11 @@ namespace Amuse.Common
     public sealed class ProcessHandler : IDisposable
     {
         private IntPtr _job;
+        private readonly System.Collections.Generic.List<int> _processIds = new();
 
         public ProcessHandler()
         {
+            if (!OperatingSystem.IsWindows()) return;
             _job = CreateJobObject(IntPtr.Zero, null);
 
             var info = new JOBOBJECT_EXTENDED_LIMIT_INFORMATION
@@ -31,12 +33,20 @@ namespace Amuse.Common
 
         public void AddProcess(Process process)
         {
-            AssignProcessToJobObject(_job, process.Handle);
+            if (OperatingSystem.IsWindows()) AssignProcessToJobObject(_job, process.Handle);
+            else _processIds.Add(process.Id);
         }
 
 
         public void Dispose()
         {
+            foreach (var id in _processIds)
+            {
+                try { using var process = Process.GetProcessById(id); if (!process.HasExited) process.Kill(true); }
+                catch (ArgumentException) { }
+                catch (InvalidOperationException) { }
+            }
+            _processIds.Clear();
             if (_job != IntPtr.Zero)
             {
                 CloseHandle(_job);

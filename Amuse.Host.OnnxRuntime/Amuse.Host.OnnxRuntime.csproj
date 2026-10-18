@@ -30,13 +30,13 @@
   </ItemGroup>
 
   <!--Debug-->
-  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+  <ItemGroup Condition="'$(Configuration)' == 'Debug' and '$(AmusePortable)' != 'true'">
     <ProjectReference Include="..\..\TensorStack.OnnxRuntime\TensorStack.OnnxRuntime.csproj" />
     <ProjectReference Include="..\..\TensorStack.OnnxRuntime.LLM\TensorStack.OnnxRuntime.LLM.csproj" />
   </ItemGroup>
 
   <!--Release-->
-  <ItemGroup Condition="'$(Configuration)' == 'Release' OR '$(Configuration)' == 'Release_Installer'">
+  <ItemGroup Condition="('$(Configuration)' == 'Release' OR '$(Configuration)' == 'Release_Installer') and '$(AmusePortable)' != 'true'">
     <PackageReference Include="TensorStack.OnnxRuntime" Version="$(PackageVersion)" />
     <PackageReference Include="TensorStack.OnnxRuntime.LLM" Version="$(PackageVersion)" />
   </ItemGroup>
@@ -46,4 +46,4 @@
     <Resource Include="Icon.ico" />
   </ItemGroup>
 
-</Project>
+<ItemGroup Condition="'$(AmusePortable)' == 'true'"><ProjectReference Include="../ThirdParty/TensorStack/TensorStack.OnnxRuntime.LLM/TensorStack.OnnxRuntime.LLM.csproj"/><ProjectReference Include="../ThirdParty/TensorStack/TensorStack.OnnxRuntime.Vision/TensorStack.OnnxRuntime.Vision.csproj"/><ProjectReference Include="../ThirdParty/TensorStack/TensorStack.Media/TensorStack.Media.csproj"/></ItemGroup></Project>

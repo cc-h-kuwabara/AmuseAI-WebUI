@@ -1,0 +1,1 @@
+namespace Amuse.App { public enum Orientation { Horizontal, Vertical } }
