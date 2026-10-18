@@ -90,6 +90,13 @@ class ColabTests(unittest.TestCase):
                 self.assertEqual(request('/api/health', {'Host': 'other.example.test'})[0], 403)
                 self.assertEqual(request('/api/health', {'Origin': 'http://kernel-8080.example.test:'+str(server.port), 'Host': 'kernel-8080.example.test'})[0], 403)
                 navigation = {**headers, 'Sec-Fetch-Site': 'cross-site', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-Dest': 'iframe'}
+                document = {'Host': 'kernel-8080.example.test', 'Sec-Fetch-Site': 'cross-site',
+                            'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-Dest': 'document'}
+                self.assertEqual(request('/', document)[0], 200 if proxy else 403)
+                self.assertEqual(request('/api/session', document)[0], 403)
+                self.assertEqual(request('/', document, 'POST')[0], 403)
+                self.assertEqual(request('/', {**document, 'Origin': 'https://evil.example'})[0], 403)
+                self.assertEqual(request('/', {**document, 'Host': 'other.example.test'})[0], 403)
                 status, response, body = request('/', navigation)
                 self.assertEqual(status, 200 if proxy else 403)
                 if proxy:

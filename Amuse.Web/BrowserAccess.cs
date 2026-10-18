@@ -26,7 +26,13 @@ internal static class BrowserAccess
                 context.Request.Headers["Sec-Fetch-Mode"] == "navigate" &&
                 context.Request.Headers["Sec-Fetch-Dest"] == "iframe" &&
                 !context.Request.Path.StartsWithSegments("/api");
-            if (!frameNavigation) return false;
+            // A notebook link opens the tunnel as a top-level cross-site navigation.
+            // Allow only the UI landing page on the explicitly configured proxy host.
+            var documentNavigation = proxyHost && context.Request.Method is "GET" or "HEAD" &&
+                context.Request.Headers["Sec-Fetch-Mode"] == "navigate" &&
+                context.Request.Headers["Sec-Fetch-Dest"] == "document" &&
+                context.Request.Path == "/";
+            if (!frameNavigation && !documentNavigation) return false;
         }
         return true;
     }
