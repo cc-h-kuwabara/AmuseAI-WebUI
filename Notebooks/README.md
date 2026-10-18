@@ -28,6 +28,8 @@ Web UIは [Cloudflare Quick Tunnel](https://developers.cloudflare.com/tunnel/get
 
 ## 配布ファイルの再作成
 
+更新時は「7. pullして再ビルドする」の `UPDATE_AND_REBUILD=True` を設定して実行し、完了後に「3. 起動・表示」を再実行してください。GitHubへpush済みの変更を取得し、Webアプリだけ再ビルドします。既存CUDA・モデルは再利用します。ビルドログは `WORK/logs/build.log`、旧アプリは `WORK/app-backup-*` に残ります。ローカル変更がある場合やfast-forwardできない場合は停止します。
+
 ```powershell
 python Scripts/create-colab-notebook.py
 ```

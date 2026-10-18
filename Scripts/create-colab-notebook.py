@@ -147,6 +147,47 @@ if 'amuse_server' in globals():
 if 'amuse_tunnel' in globals():
     amuse_tunnel.stop()
 ''')
+cell('markdown', '''
+## 7. pullして再ビルドする（更新時のみ）
+
+設定・clone済みのランタイムで `UPDATE_AND_REBUILD=True` にして実行します。未保存の生成処理がないことを確認してください。サーバーとトンネルを停止し、`git pull --ff-only` で更新してWebアプリを再ビルドします。ローカル変更がある場合は停止します。CUDAライブラリー・モデル・データは再利用します。旧アプリは `WORK/app-backup-*` に残し、ビルド失敗時は元に戻します。
+
+完了したら「3. 起動・表示」を再実行してください（新しい公開URLになります）。ログは `WORK/logs/build.log` に追記します。GitHubへpushされていない変更は取得できません。
+''')
+cell('code', '''
+UPDATE_AND_REBUILD = False  # 更新する場合だけTrueにして、このセルを実行
+if UPDATE_AND_REBUILD:
+    import importlib, subprocess, uuid
+    dirty = subprocess.check_output(['git', '-C', str(SOURCE), 'status', '--porcelain'], text=True)
+    if dirty.strip():
+        raise RuntimeError('ソースにローカル変更があります。変更を保存・解消してから再実行してください。')
+    for name in ('amuse_server', 'amuse_tunnel'):
+        if name in globals():
+            globals()[name].stop()
+    subprocess.run(['git', '-C', str(SOURCE), 'pull', '--ff-only'], check=True)
+    print('更新コミット:', subprocess.check_output(['git', '-C', str(SOURCE), 'rev-parse', 'HEAD'], text=True).strip())
+    importlib.invalidate_caches()
+    import colab_cache
+    importlib.reload(colab_cache)
+    amuse = importlib.reload(amuse)
+    app = WORK / 'app'
+    backup = WORK / ('app-backup-' + uuid.uuid4().hex[:12])
+    if app.exists():
+        app.rename(backup)
+        print('旧アプリ:', backup)
+    try:
+        # キャッシュ復元を使わずWebアプリを再ビルド。既存CUDAはそのまま利用。
+        distribution, DATA = amuse.prepare(SOURCE, WORK, use_gpu=USE_GPU, build_jobs=BUILD_JOBS)
+    except BaseException:
+        if app.exists():
+            failed = WORK / ('app-failed-' + uuid.uuid4().hex[:12])
+            app.rename(failed)
+            print('失敗したビルド:', failed)
+        if backup.exists():
+            backup.rename(app)
+        raise
+    print('再ビルド完了。「3. 起動・表示」を再実行してください。')
+''')
 notebook = {'nbformat': 4, 'nbformat_minor': 5, 'metadata': {
     'colab': {'name': 'Amuse_Web_Colab.ipynb', 'provenance': []},
     'kernelspec': {'name': 'python3', 'display_name': 'Python 3'}, 'accelerator': 'GPU'}, 'cells': cells}
