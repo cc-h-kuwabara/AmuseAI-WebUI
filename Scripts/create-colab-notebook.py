@@ -20,7 +20,7 @@ cell('markdown', '''
 
 NVIDIA GPUでLinux Web版を動かすノートブックです。「ランタイム → ランタイムのタイプを変更」でGPUを選び、上から順に実行します。初回は.NETとCUDAライブラリーのビルドに時間がかかります。
 
-**用意するファイル:** このノートブックと一緒に配布する `Amuse_Colab_Source.zip`。まだGitHubへ公開していない変更も、このZIPから実行できます。Pythonのグローバルパッケージは変更しません。
+このノートブックから `https://github.com/cc-h-kuwabara/AmuseAI-WebUI.git` の `webui` ブランチをcloneしてビルドします。ソースZIPのアップロードは不要です。Pythonのグローバルパッケージは変更しません。
 
 Web UIはColab公式ポートプロキシでノートブック内に表示します。公開トンネルや常時起動・切断回避処理は使いません。[Colab公式FAQ](https://research.google.com/colaboratory/faq.html)では、無料枠・コンピュートユニット残高なしでWeb UIを主に使う生成処理が制限されています。その場合は `USE_WEB_UI=False` とし、下の生成セルから実行してください。有料枠でもランタイムの寿命・利用可能GPUは保証されません。
 
@@ -34,16 +34,14 @@ USE_GPU = True
 USE_WEB_UI = True
 MOUNT_DRIVE = False
 MODEL_DIRECTORY = ''  # 例: /content/drive/MyDrive/Amuse/Models
-SOURCE_MODE = 'upload'  # upload または git
-SOURCE_ARCHIVE = ''  # 空ならアップロード画面。Drive上のZIPパスも指定可能
 GIT_URL = 'https://github.com/cc-h-kuwabara/AmuseAI-WebUI.git'
-GIT_REF = 'webui'  # colab_runtime.py を含む版が公開されている場合のみ使用
+GIT_REF = 'webui'  # Colab対応を含むブランチ
 SOURCE = WORK / 'source'
 DATA = WORK / 'data'
 ''')
-cell('markdown', '## 1. ソースを準備する\nDriveのマウントは任意です。アップロードするZIPには実行するソースコードが含まれるため、自分で作成した配布ZIPを使ってください。')
+cell('markdown', '## 1. GitHubからcloneする\n指定リポジトリーのwebuiブランチを取得します。再実行時は既存のcloneを再利用し、実行するコミットを表示します。Driveのマウントは任意です。')
 cell('code', '''
-import os, sys, subprocess, zipfile
+import sys, subprocess
 if MOUNT_DRIVE:
     from google.colab import drive
     drive.mount('/content/drive')
@@ -51,33 +49,18 @@ if MODEL_DIRECTORY.startswith('/content/drive/') and not MOUNT_DRIVE:
     raise ValueError('Driveのモデル保存先を使う場合は MOUNT_DRIVE=True にしてください。')
 WORK.mkdir(parents=True, exist_ok=True)
 if SOURCE.exists():
-    if not (SOURCE / 'Scripts/colab_runtime.py').is_file():
-        raise RuntimeError('不完全なソース保存先です。WORKを別のフォルダーに変更してください。')
-    print('既存ソースを再利用:', SOURCE)
-elif SOURCE_MODE == 'git':
-    subprocess.run(['git', 'clone', '--depth', '1', '--branch', GIT_REF, GIT_URL, str(SOURCE)], check=True)
-    if not (SOURCE / 'Scripts/colab_runtime.py').is_file():
-        raise RuntimeError('このGit版にはColab対応がありません。配布ZIPを使用してください。')
-elif SOURCE_MODE == 'upload':
-    if SOURCE_ARCHIVE:
-        archive = Path(SOURCE_ARCHIVE)
-    else:
-        from google.colab import files
-        uploaded = files.upload()
-        if len(uploaded) != 1:
-            raise ValueError('Amuse_Colab_Source.zip を1つ選んでください。')
-        archive = Path(next(iter(uploaded))).resolve()
-        del uploaded
-    with zipfile.ZipFile(archive) as bundle:
-        if 'Scripts/colab_runtime.py' not in bundle.namelist():
-            raise ValueError('配布された Amuse_Colab_Source.zip を選んでください。')
-        for entry in bundle.infolist():
-            target = (SOURCE / entry.filename).resolve()
-            if not target.is_relative_to(SOURCE.resolve()) or (entry.external_attr >> 16) & 0o170000 == 0o120000:
-                raise ValueError('安全でないZIPパス: ' + entry.filename)
-        bundle.extractall(SOURCE)
+    if not (SOURCE / '.git').is_dir():
+        raise RuntimeError('保存先がGit cloneではありません。WORKを別のフォルダーに変更してください。')
+    remote = subprocess.check_output(['git', '-C', str(SOURCE), 'remote', 'get-url', 'origin'], text=True).strip()
+    branch = subprocess.check_output(['git', '-C', str(SOURCE), 'branch', '--show-current'], text=True).strip()
+    if remote != GIT_URL or branch != GIT_REF:
+        raise RuntimeError('保存先のリポジトリーまたはブランチが設定と異なります。WORKを別のフォルダーに変更してください。')
+    print('既存のcloneを再利用:', SOURCE)
 else:
-    raise ValueError('SOURCE_MODE は upload または git です。')
+    subprocess.run(['git', 'clone', '--depth', '1', '--branch', GIT_REF, GIT_URL, str(SOURCE)], check=True)
+if not (SOURCE / 'Scripts/colab_runtime.py').is_file():
+    raise RuntimeError('このブランチにはColab対応がありません。GIT_REFを確認してください。')
+print('実行コミット:', subprocess.check_output(['git', '-C', str(SOURCE), 'rev-parse', 'HEAD'], text=True).strip())
 sys.path.insert(0, str(SOURCE / 'Scripts'))
 import colab_runtime as amuse
 print('Source ready:', SOURCE)
