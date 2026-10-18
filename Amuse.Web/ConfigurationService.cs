@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Reflection;
 using TensorStack.Common;
+using TensorStack.Common.Common;
 using TensorStack.WPF.Services;
 
 namespace Amuse.Web;
@@ -161,9 +162,25 @@ public sealed class ConfigurationService(WebData data, IServiceProvider services
             else if (checkpoint.Type is CheckpointType.OnlineFile or CheckpointType.OnlineFolder && !checkpoint.IsInstalled(directory, components))
             {
                 var path = CheckpointComponent.GetSafePath(directory, checkpoint.Folder, checkpoint.Path);
-                job.Progress($"Downloading {checkpoint.Name}");
-                await downloader.DownloadAsync([.. checkpoint.DownloadFiles ?? []], path,
-                    new InlineProgress<DownloadProgress>(_ => job.Progress($"Downloading {checkpoint.Name}")), job.Token);
+                // Use the same folder mapping as the batch downloader, but retain the
+                // current filename even on Windows where DownloadProgress has no name.
+                var files = FileHelper.GetUrlFileMapping(checkpoint.DownloadFiles ?? [], path);
+                foreach (var file in files)
+                {
+                    job.Token.ThrowIfCancellationRequested();
+                    if (File.Exists(file.Value)) continue;
+                    var name = Path.GetRelativePath(path, file.Value);
+                    job.Progress($"Downloading {name} — 0 B");
+                    await downloader.DownloadAsync(file.Key, file.Value,
+                        new InlineProgress<DownloadProgress>(progress =>
+                        {
+                            var size = FormatDownloadSize(progress.TotalBytes);
+                            if (progress.TotalSize > 0) size += $" / {FormatDownloadSize(progress.TotalSize)}";
+                            var percent = progress.TotalSize > 0
+                                ? (int)Math.Clamp(progress.TotalBytes * 100.0 / progress.TotalSize, 0, 100) : 0;
+                            job.Progress($"Downloading {name} — {size}", percent, progress.TotalSize > 0 ? 100 : 0);
+                        }), job.Token);
+                }
             }
         }
         if (model is IGenerateModel generate)
@@ -190,5 +207,14 @@ public sealed class ConfigurationService(WebData data, IServiceProvider services
         await Settings.SaveAsync();
         return [];
     }
+    private static string FormatDownloadSize(long bytes)
+    {
+        string[] units = ["B", "KiB", "MiB", "GiB", "TiB"];
+        double value = Math.Max(0, bytes);
+        var unit = 0;
+        while (value >= 1024 && unit < units.Length - 1) { value /= 1024; unit++; }
+        return value.ToString(unit == 0 ? "0" : "0.00", System.Globalization.CultureInfo.InvariantCulture) + " " + units[unit];
+    }
+
     private sealed record TokenUpdate(string Name, string? Token);
 }
