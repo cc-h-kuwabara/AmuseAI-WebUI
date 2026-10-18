@@ -29,7 +29,7 @@ Web UIはColab公式ポートプロキシでノートブック内に表示しま
 cell('code', '''
 from pathlib import Path
 WORK = Path('/content/amuse')
-PORT = 8080
+PORT = 8082
 USE_GPU = True
 USE_WEB_UI = True
 MOUNT_DRIVE = False
@@ -75,6 +75,7 @@ cell('markdown', '''
 初回のCUDAコンパイルは必要です。`BUILD_JOBS=0` は並列数を自動設定します。メモリー不足で失敗する場合は `BUILD_JOBS=2` に下げてください。同じランタイム内の再実行では既存のビルドを利用します。
 ''')
 cell('code', '''
+print('ビルドログ:', WORK / 'logs/build.log')
 cache_directory = CACHE_DIRECTORY or ('/content/drive/MyDrive/Amuse/BuildCache' if MOUNT_DRIVE else None)
 distribution, DATA = amuse.prepare(SOURCE, WORK, use_gpu=USE_GPU, cache_directory=cache_directory, build_jobs=BUILD_JOBS)
 print('配布版:', distribution)

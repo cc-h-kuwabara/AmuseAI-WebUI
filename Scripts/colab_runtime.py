@@ -31,28 +31,33 @@ def extract_source(archive, destination):
     return destination
 
 
-def run(command, *, env=None, cwd=None):
-    print('+', ' '.join(map(str, command)), flush=True)
+def run(command, *, env=None, cwd=None, log_file=None):
+    log_file = Path(log_file) if log_file else Path(cwd or Path.cwd()) / 'build.log'
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+    command = list(map(str, command))
+    print(f'Starting: {command[0]} | Log: {log_file}', flush=True)
     started = time.monotonic()
-    # Forward through Python stdout so Colab captures child-process output too.
-    with subprocess.Popen(list(map(str, command)), env=env, cwd=cwd,
-                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                          text=True, encoding='utf-8', errors='replace', bufsize=1) as process:
-        try:
-            for line in process.stdout:
-                print(line, end='', flush=True)
-            returncode = process.wait()
-        except BaseException:
-            process.terminate()
+    with log_file.open('ab', buffering=0) as log:
+        log.write(('\n+ ' + ' '.join(command) + '\n').encode('utf-8'))
+        with subprocess.Popen(command, env=env, cwd=cwd,
+                              stdout=log, stderr=subprocess.STDOUT) as process:
             try:
-                process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait()
-            raise
-        if returncode:
-            raise subprocess.CalledProcessError(returncode, command)
-    print(f'Finished in {time.monotonic() - started:.1f}s', flush=True)
+                returncode = process.wait()
+            except BaseException:
+                process.terminate()
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait()
+                log.write(b'\nBuild command interrupted.\n')
+                raise
+        status = f'Exit code: {returncode}; elapsed: {time.monotonic() - started:.1f}s'
+        log.write(('\n' + status + '\n').encode('utf-8'))
+    if returncode:
+        print(f'Failed ({returncode}). See log: {log_file}', flush=True)
+        raise subprocess.CalledProcessError(returncode, command)
+    print(f'Finished in {time.monotonic() - started:.1f}s | Log: {log_file}', flush=True)
 
 
 def build_parallelism():
@@ -77,12 +82,17 @@ def prepare(source, work, use_gpu=True, *, cache_directory=None, build_jobs=0):
     source, work = Path(source).resolve(), Path(work).resolve()
     if platform.system() != 'Linux' or platform.machine() not in ('x86_64', 'amd64'):
         raise RuntimeError('Use a Linux x64 Colab runtime.')
+    log_file = work / 'logs/build.log'
+
+    def execute(command, **kwargs):
+        run(command, log_file=log_file, **kwargs)
+
     native_platform = None
     if use_gpu:
         for tool in ('nvidia-smi', 'nvcc'):
             if not shutil.which(tool):
                 raise RuntimeError(f'{tool} is missing. Select a GPU runtime, or set USE_GPU=False.')
-        run(['nvidia-smi', '--query-gpu=name,memory.total', '--format=csv,noheader'])
+        execute(['nvidia-smi', '--query-gpu=name,memory.total', '--format=csv,noheader'])
         native_platform = {
             'gpu': subprocess.check_output(['nvidia-smi', '--query-gpu=name', '--format=csv,noheader'], text=True).strip(),
             'compiler': subprocess.check_output(['nvcc', '--version'], text=True).strip(),
@@ -116,27 +126,27 @@ def prepare(source, work, use_gpu=True, *, cache_directory=None, build_jobs=0):
             missing.append(package)
     if missing:
         apt = ['apt-get'] if os.geteuid() == 0 else ['sudo', 'apt-get']
-        run([*apt, 'update', '-qq'])
-        run([*apt, 'install', '-y', '-qq', *missing])
+        execute([*apt, 'update', '-qq'])
+        execute([*apt, 'install', '-y', '-qq', *missing])
     else:
         print('System dependencies already installed; skipping APT.', flush=True)
     dotnet = work / 'dotnet'
     if need_app and not (dotnet / 'dotnet').is_file():
         installer = work / 'dotnet-install.sh'
         urllib.request.urlretrieve('https://dot.net/v1/dotnet-install.sh', installer)
-        run(['bash', installer, '--channel', '10.0', '--install-dir', dotnet, '--no-path'])
+        execute(['bash', installer, '--channel', '10.0', '--install-dir', dotnet, '--no-path'])
     env = dict(os.environ, DOTNET_ROOT=str(dotnet), DOTNET_CLI_TELEMETRY_OPTOUT='1',
                DOTNET_NOLOGO='1', PATH=str(dotnet) + os.pathsep + os.environ['PATH'])
     if need_app:
         if distribution.exists():
             raise RuntimeError(f'Incomplete publish directory: {distribution}. Choose a new WORK directory.')
-        run(['bash', source / 'Scripts/publish-web-linux.sh', distribution], env=env)
+        execute(['bash', source / 'Scripts/publish-web-linux.sh', distribution], env=env)
         if cache:
             colab_cache.save(cache, app_key, distribution)
     if need_native:
         env['AMUSE_BUILD_JOBS'] = str(build_jobs or build_parallelism())
         print('CUDA build parallel jobs:', env['AMUSE_BUILD_JOBS'], flush=True)
-        run(['bash', source / 'Scripts/install-sd-cuda-linux.sh', data], env=env)
+        execute(['bash', source / 'Scripts/install-sd-cuda-linux.sh', data], env=env)
         if cache:
             colab_cache.save(cache, native_key, native)
     elif use_gpu:
@@ -152,7 +162,7 @@ def https_origin(url):
 
 
 class Server:
-    def __init__(self, distribution, data, port=8080, *, proxy_url=None, frame_origin=None):
+    def __init__(self, distribution, data, port=8082, *, proxy_url=None, frame_origin=None):
         if not isinstance(port, int) or not 1 <= port <= 65535:
             raise ValueError('PORT must be an integer between 1 and 65535.')
         self.distribution, self.data, self.port = Path(distribution).resolve(), Path(data).resolve(), port

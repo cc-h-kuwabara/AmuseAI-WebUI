@@ -16,30 +16,25 @@ import colab_runtime as runtime
 
 
 class CacheTests(unittest.TestCase):
-    def test_build_output_is_forwarded_before_process_exits(self):
+    def test_build_output_goes_to_log_and_failure_is_preserved(self):
         with tempfile.TemporaryDirectory() as tmp:
-            marker = Path(tmp) / 'received'
-
-            class Console(io.StringIO):
-                def write(self, value):
-                    if value == 'stdout-ready\n':
-                        marker.touch()
-                    return super().write(value)
-
-            console = Console()
-            code = (
-                "import pathlib,sys,time; p=pathlib.Path(sys.argv[1]); "
-                "print('stdout-ready',flush=True); "
-                "deadline=time.monotonic()+5\n"
-                "while not p.exists() and time.monotonic()<deadline: time.sleep(.01)\n"
-                "print('stderr-ready',file=sys.stderr,flush=True)\n"
-                "sys.exit(3 if p.exists() else 9)"
-            )
+            log = Path(tmp) / 'logs/build.log'
+            console = io.StringIO()
+            code = "import sys; print('stdout-ready'); print('stderr-ready',file=sys.stderr); sys.exit(3)"
             with contextlib.redirect_stdout(console):
                 with self.assertRaises(subprocess.CalledProcessError) as failure:
-                    runtime.run([sys.executable, '-u', '-c', code, str(marker)])
+                    runtime.run([sys.executable, '-u', '-c', code], log_file=log)
             self.assertEqual(failure.exception.returncode, 3)
-            self.assertIn('stderr-ready\n', console.getvalue())
+            content = log.read_text()
+            self.assertIn('stdout-ready', content)
+            self.assertIn('stderr-ready', content)
+            self.assertIn('Exit code: 3', content)
+            self.assertNotIn('stdout-ready', console.getvalue())
+            self.assertNotIn('stderr-ready', console.getvalue())
+            with contextlib.redirect_stdout(console):
+                runtime.run([sys.executable, '-c', "print('next-run')"], log_file=log)
+            self.assertIn('stdout-ready', log.read_text())
+            self.assertIn('next-run', log.read_text())
 
     def test_roundtrip_excludes_runtime_data_and_preserves_mode(self):
         with tempfile.TemporaryDirectory() as tmp:
